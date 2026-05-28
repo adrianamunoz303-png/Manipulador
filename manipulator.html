@@ -410,6 +410,16 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
       Dinámica L-E
     </div>
     <div class="nav-divider"></div>
+    <div class="nav-label">Movimiento</div>
+    <div class="nav-item" onclick="showPanel('traj')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+      Trayectoria
+    </div>
+    <div class="nav-item" onclick="showPanel('perfiles')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Perfiles
+    </div>
+    <div class="nav-divider"></div>
     <div class="nav-label">Sistema</div>
     <div class="nav-item" onclick="showPanel('test')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
@@ -989,6 +999,194 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
   </div>
 </div>
 
+<!-- ── PANEL: Trayectoria ── -->
+<div id="panel-traj" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Planificación de Trayectorias</div>
+      <div class="panel-sub">Trapezoidal · Cúbico · Eje a Eje · Simultáneo · Asociado · Analítico — 3P+R (Q1..Q3: mm · Q4: °)</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:330px 1fr;flex:1;overflow:hidden">
+
+    <!-- ── LEFT: inputs ── -->
+    <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+
+      <!-- Posición Inicial -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--green)"></div>Posición Inicial — Q_i</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₁  X (mm)</div>
+            <input type="number" id="traj_qi1" value="0" min="0" max="265" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₂  Y (mm)</div>
+            <input type="number" id="traj_qi2" value="0" min="0" max="190" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₃  Z (mm)</div>
+            <input type="number" id="traj_qi3" value="0" min="0" max="120" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₄  θ servo (°)</div>
+            <input type="number" id="traj_qi4" value="36" min="0" max="74" step="0.5"/></div>
+        </div>
+        <button class="btn btn-xs btn-secondary" style="margin-top:8px;width:100%" onclick="trajLoadCurrent()">↓  Capturar posición actual</button>
+      </div>
+
+      <!-- Posición Final -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--red)"></div>Posición Final — Q_f</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₁  X (mm)</div>
+            <input type="number" id="traj_qf1" value="100" min="0" max="265" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₂  Y (mm)</div>
+            <input type="number" id="traj_qf2" value="80" min="0" max="190" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₃  Z (mm)</div>
+            <input type="number" id="traj_qf3" value="60" min="0" max="120" step="0.5"/></div>
+          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₄  θ servo (°)</div>
+            <input type="number" id="traj_qf4" value="36" min="0" max="74" step="0.5"/></div>
+        </div>
+      </div>
+
+      <!-- Configuración -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--blue)"></div>Configuración</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Tipo de trayectoria</div>
+            <select id="traj_tipo" onchange="trajOnTipoChange()">
+              <option value="eje_eje">Eje a Eje</option>
+              <option value="simultaneo">Ejes Simultáneos</option>
+              <option value="aso">Asociado (Aso)</option>
+              <option value="analitica">Analítica (línea recta EF)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Interpolador</div>
+            <select id="traj_interp">
+              <option value="trap">Trapezoidal</option>
+              <option value="cubico">Cúbico</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div>
+              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Puntos N</div>
+              <input type="number" id="traj_N" value="10" min="2" max="500" step="1"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">V_máx prism. (mm/s)</div>
+              <input type="number" id="traj_vmax_p" value="80" min="1" max="300" step="1"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div>
+              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Acel. prism. (mm/s²)</div>
+              <input type="number" id="traj_a_p" value="150" min="1" max="1000" step="10"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">V_máx rot. (°/s)</div>
+              <input type="number" id="traj_vmax_r" value="20" min="1" max="90" step="1"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn btn-primary btn-full" onclick="computeTrajectory()">▶  Crear Trayectoria</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="btn btn-secondary btn-full" id="btnSimTraj" onclick="simulateTraj()">⬤  Simular</button>
+          <button class="btn btn-secondary btn-full" onclick="navToPanel('perfiles')">📊  Perfiles</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="btn btn-full" style="background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.3);color:var(--green);font-weight:600" onclick="sendTrajToArduino()">↑  Enviar Arduino</button>
+          <button class="btn btn-secondary btn-full" onclick="clearTraj()">✕  Limpiar</button>
+        </div>
+      </div>
+
+      <!-- Estado -->
+      <div id="traj_status" class="card" style="font-size:11px;color:var(--muted2);line-height:1.8;display:none"></div>
+
+    </div><!-- /left -->
+
+    <!-- ── RIGHT: visualización 2D ── -->
+    <div style="display:flex;flex-direction:column;overflow:hidden;background:var(--bg0)">
+      <div style="padding:8px 14px;background:rgba(255,255,255,.8);border-bottom:1px solid var(--gb);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2)">
+        Proyección XY del Efector Final · Verde=inicio · Rojo=fin · Azul=posición actual
+      </div>
+      <div style="flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:14px">
+        <canvas id="canvas_traj2d" width="700" height="400"
+          style="border:1px solid var(--gb);border-radius:10px;background:#fff;max-width:100%;max-height:100%"></canvas>
+        <div id="traj_overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2" style="width:52px;height:52px;opacity:.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+          <div style="font-size:13px;font-weight:700;color:#94a3b8">Sin trayectoria calculada</div>
+          <div style="font-size:11px;color:#94a3b8;text-align:center;max-width:260px;line-height:1.7">Ingrese posición inicial y final,<br>seleccione modo e interpolador<br>y presione <strong>Crear Trayectoria</strong></div>
+        </div>
+      </div>
+      <div id="traj_info_bar" style="padding:8px 14px;background:rgba(255,255,255,.8);border-top:1px solid var(--gb);display:none">
+        <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:11px;color:var(--muted2)">
+          <span>Puntos: <strong id="traj_info_n" style="color:var(--text)">—</strong></span>
+          <span>Tiempo total: <strong id="traj_info_t" style="color:var(--text)">—</strong> s</span>
+          <span>Modo: <strong id="traj_info_modo" style="color:var(--text)">—</strong></span>
+        </div>
+      </div>
+    </div><!-- /right -->
+
+  </div>
+</div>
+
+<!-- ── PANEL: Perfiles ── -->
+<div id="panel-perfiles" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Perfiles de Trayectoria</div>
+      <div class="panel-sub">Posición · Velocidad · Aceleración por articulación — Q1,Q2,Q3: mm · Q4: grados</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="navToPanel('traj')">← Trayectoria</button>
+  </div>
+
+  <!-- Sin datos -->
+  <div id="perfiles_msg" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted2)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="width:52px;height:52px;opacity:.3"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <div style="font-size:14px;font-weight:700;opacity:.5">Sin datos de trayectoria</div>
+    <div style="font-size:11px;text-align:center;opacity:.4;max-width:280px;line-height:1.7">
+      Ve a <strong>Trayectoria</strong>, configura y presiona <strong>Crear Trayectoria</strong>, luego regresa aquí
+    </div>
+  </div>
+
+  <!-- Grid 4 × 3 de gráficas -->
+  <div id="perfiles_charts" style="display:none;flex:1;overflow-y:auto;padding:12px;gap:10px;grid-template-columns:repeat(4,1fr)">
+
+    <!-- Q1 — X (mm) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);text-align:center;padding:4px 0;background:rgba(37,99,235,.06);border-radius:6px">Q₁ · X (mm)</div>
+      <canvas id="perf_c0_0" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c0_1" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c0_2" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+    </div>
+
+    <!-- Q2 — Y (mm) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--green);text-align:center;padding:4px 0;background:rgba(5,150,105,.06);border-radius:6px">Q₂ · Y (mm)</div>
+      <canvas id="perf_c1_0" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c1_1" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c1_2" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+    </div>
+
+    <!-- Q3 — Z (mm) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--red);text-align:center;padding:4px 0;background:rgba(220,38,38,.06);border-radius:6px">Q₃ · Z (mm)</div>
+      <canvas id="perf_c2_0" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c2_1" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c2_2" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+    </div>
+
+    <!-- Q4 — θ (°) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--purple);text-align:center;padding:4px 0;background:rgba(124,58,237,.06);border-radius:6px">Q₄ · θ (°)</div>
+      <canvas id="perf_c3_0" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c3_1" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+      <canvas id="perf_c3_2" width="240" height="110" style="width:100%;border:1px solid var(--gb);border-radius:8px"></canvas>
+    </div>
+
+  </div>
+</div>
+
 </div><!-- /content -->
 </div><!-- /app -->
 
@@ -1013,10 +1211,29 @@ function showPanel(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if(event&&event.currentTarget) event.currentTarget.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+id+"'"))n.classList.add('active');});
   if(id==='home') setTimeout(resizeRenderer,50);
   if(id==='htm') updateHTM();
   if(id==='volume') setTimeout(initVolRenderer,50);
+  if(id==='perfiles') setTimeout(initPerfilesPanel,80);
+  if(id==='traj') setTimeout(()=>{if(trajData)drawTraj2D();},50);
+}
+
+// Navigate programmatically (without relying on event.currentTarget)
+function navToPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.remove('active');
+    if((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
+  });
+  const panel=document.getElementById('panel-'+id);
+  if(panel) panel.classList.add('active');
+  if(id==='home') setTimeout(resizeRenderer,50);
+  if(id==='htm') updateHTM();
+  if(id==='volume') setTimeout(initVolRenderer,50);
+  if(id==='perfiles') setTimeout(initPerfilesPanel,80);
+  if(id==='traj') setTimeout(()=>{if(trajData)drawTraj2D();},50);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2321,6 +2538,585 @@ function renderLEResults(data){
 document.addEventListener('DOMContentLoaded',()=>{
   leSetGDL();
 });
+
+// ══════════════════════════════════════════════════════════════
+// TRAYECTORIA — Planificación de movimientos
+// ══════════════════════════════════════════════════════════════
+let trajData = null;       // último resultado calculado
+let trajAnimRunning = false;
+let trajAnimIdx = 0;
+
+function trajLoadCurrent(){
+  document.getElementById('traj_qi1').value = pos.x.toFixed(2);
+  document.getElementById('traj_qi2').value = pos.y.toFixed(2);
+  document.getElementById('traj_qi3').value = pos.z.toFixed(2);
+  document.getElementById('traj_qi4').value = pos.servo.toFixed(2);
+}
+
+function trajOnTipoChange(){
+  const tipo = document.getElementById('traj_tipo').value;
+  const sel  = document.getElementById('traj_interp');
+  if(tipo === 'analitica'){ sel.value = 'cubico'; sel.disabled = true; }
+  else sel.disabled = false;
+}
+
+// ── Tiempo mínimo trapezoidal para un eje ──
+function trapMinTime(qi, qf, a, vmax){
+  const D = Math.abs(qf - qi);
+  if(D < 1e-9) return 0;
+  const tac = vmax / a;
+  const dac = 0.5 * a * tac * tac;
+  return (2 * dac >= D) ? 2 * Math.sqrt(D / a) : 2 * tac + (D - 2 * dac) / vmax;
+}
+
+// ── Perfil trapezoidal: N puntos en [0, T] ──
+// Resuelve la velocidad V a partir de T dado (T >= tmin)
+function trapProfileN(qi, qf, a, T, N){
+  const D   = Math.abs(qf - qi);
+  const sgn = qf >= qi ? 1 : -1;
+  const t   = [], q = [], qd = [], qdd = [];
+  if(N < 2) N = 2;
+
+  if(D < 1e-9){
+    for(let i = 0; i < N; i++){ const tt = i * T / (N-1); t.push(tt); q.push(qi); qd.push(0); qdd.push(0); }
+    return {t, q, qd, qdd};
+  }
+
+  // V² − T·a·V + a·D = 0  →  V = (T·a − sqrt(T²a²−4aD)) / 2
+  const disc = T * T * a * a - 4 * a * D;
+  let V = disc < 0 ? Math.sqrt(a * D) : (T * a - Math.sqrt(Math.max(0, disc))) / 2;
+  if(V <= 0) V = Math.sqrt(a * D);
+
+  const tac = V / a;
+  const dac = 0.5 * a * tac * tac;
+  const isTri = 2 * dac >= D - 1e-9;
+  const tac_r = isTri ? T / 2 : tac;
+  const tc    = isTri ? 0     : T - 2 * tac;
+  const Va    = isTri ? a * tac_r : V;
+
+  for(let i = 0; i < N; i++){
+    const tt = i * T / (N-1);
+    t.push(tt);
+    let qi_v, qd_v, qdd_v;
+    if(tt <= tac_r){
+      qdd_v = a * sgn;
+      qd_v  = a * tt * sgn;
+      qi_v  = qi + sgn * 0.5 * a * tt * tt;
+    } else if(!isTri && tt <= tac_r + tc){
+      const dt = tt - tac_r;
+      qdd_v = 0; qd_v = Va * sgn;
+      qi_v  = qi + sgn * (dac + Va * dt);
+    } else {
+      const dt = T - tt;
+      qdd_v = -a * sgn;
+      qd_v  = a * dt * sgn;
+      qi_v  = qf - sgn * 0.5 * a * dt * dt;
+    }
+    q.push(qi_v); qd.push(qd_v); qdd.push(qdd_v);
+  }
+  return {t, q, qd, qdd};
+}
+
+// ── Spline cúbico natural: N puntos interpolados ──
+function cubicSplineN(q_w, t_w, N){
+  const n = q_w.length;
+  const T0 = t_w[0], Tf = t_w[n-1];
+
+  if(n < 2){
+    const t = Array.from({length:N},(_,i)=>T0+i*(Tf-T0)/(N-1));
+    return {t, q:t.map(()=>q_w[0]), qd:t.map(()=>0), qdd:t.map(()=>0)};
+  }
+  if(n === 2){
+    const v = (q_w[1]-q_w[0])/(t_w[1]-t_w[0]);
+    const t = Array.from({length:N},(_,i)=>T0+i*(Tf-T0)/(N-1));
+    return {t, q:t.map(tt=>q_w[0]+v*(tt-T0)), qd:t.map(()=>v), qdd:t.map(()=>0)};
+  }
+
+  const h = [], alpha = [];
+  for(let i = 0; i < n-1; i++) h.push(t_w[i+1]-t_w[i]);
+  for(let i = 1; i < n-1; i++)
+    alpha.push(3*((q_w[i+1]-q_w[i])/h[i] - (q_w[i]-q_w[i-1])/h[i-1]));
+
+  const l = new Array(n).fill(0), mu = new Array(n).fill(0), z = new Array(n).fill(0);
+  l[0] = 1;
+  for(let i = 1; i < n-1; i++){
+    l[i]  = 2*(t_w[i+1]-t_w[i-1]) - h[i-1]*mu[i-1];
+    mu[i] = h[i]/l[i];
+    z[i]  = (alpha[i-1] - h[i-1]*z[i-1])/l[i];
+  }
+  l[n-1] = 1; z[n-1] = 0;
+  const M = new Array(n).fill(0);
+  for(let j = n-2; j >= 0; j--) M[j] = z[j] - mu[j]*M[j+1];
+
+  const out = {t:[], q:[], qd:[], qdd:[]};
+  for(let i = 0; i < N; i++){
+    const tt = T0 + i*(Tf-T0)/(N-1);
+    let seg = n-2;
+    for(let j = 0; j < n-1; j++){ if(tt <= t_w[j+1]){ seg=j; break; } }
+    const dt = tt - t_w[seg], hi = h[seg];
+    const b = (q_w[seg+1]-q_w[seg])/hi - hi*(2*M[seg]+M[seg+1])/6;
+    const c = M[seg]/2;
+    const d = (M[seg+1]-M[seg])/(6*hi);
+    out.t.push(tt);
+    out.q.push(q_w[seg] + b*dt + c*dt*dt + d*dt*dt*dt);
+    out.qd.push(b + 2*c*dt + 3*d*dt*dt);
+    out.qdd.push(2*c + 6*d*dt);
+  }
+  return out;
+}
+
+// ── Selección del algoritmo ──
+function computeTrajectory(){
+  const qi = [
+    parseFloat(document.getElementById('traj_qi1').value)||0,
+    parseFloat(document.getElementById('traj_qi2').value)||0,
+    parseFloat(document.getElementById('traj_qi3').value)||0,
+    parseFloat(document.getElementById('traj_qi4').value)||36
+  ];
+  const qf = [
+    parseFloat(document.getElementById('traj_qf1').value)||0,
+    parseFloat(document.getElementById('traj_qf2').value)||0,
+    parseFloat(document.getElementById('traj_qf3').value)||0,
+    parseFloat(document.getElementById('traj_qf4').value)||36
+  ];
+  const N      = Math.max(2, parseInt(document.getElementById('traj_N').value)||10);
+  const tipo   = document.getElementById('traj_tipo').value;
+  const interp = document.getElementById('traj_interp').value;
+  const vmaxP  = parseFloat(document.getElementById('traj_vmax_p').value)||80;
+  const vmaxR  = parseFloat(document.getElementById('traj_vmax_r').value)||20;
+  const aP     = parseFloat(document.getElementById('traj_a_p').value)||150;
+  const aR     = 30; // °/s²
+
+  const a    = [aP, aP, aP, aR];
+  const vmax = [vmaxP, vmaxP, vmaxP, vmaxR];
+
+  try {
+    if(tipo === 'analitica'){
+      trajData = buildTrajAnalitica(qi, qf, N, a, vmax);
+    } else if(interp === 'trap'){
+      trajData = buildTrajTrapezoidal(qi, qf, a, vmax, N, tipo);
+    } else {
+      trajData = buildTrajCubico(qi, qf, a, vmax, N, tipo);
+    }
+  } catch(e){
+    showTrajStatus('Error: '+e.message, 'red'); return;
+  }
+
+  const np = trajData.t.length;
+  document.getElementById('traj_overlay').style.display='none';
+  document.getElementById('traj_info_bar').style.display='block';
+  document.getElementById('traj_info_n').textContent = np;
+  document.getElementById('traj_info_t').textContent = trajData.tTotal.toFixed(3);
+  document.getElementById('traj_info_modo').textContent = tipo + ' / ' + (tipo==='analitica'?'cúbico':interp);
+  showTrajStatus('✓ Trayectoria calculada — '+np+' puntos · T='+trajData.tTotal.toFixed(3)+'s', 'green');
+  drawTraj2D();
+}
+
+// ── Trapezoidal: eje_eje | simultaneo | aso ──
+function buildTrajTrapezoidal(qi, qf, a, vmax, N, tipo){
+  if(tipo === 'eje_eje'){
+    const allT=[], allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
+    let t_off = 0;
+    for(let j = 0; j < 4; j++){
+      const T  = Math.max(trapMinTime(qi[j], qf[j], a[j], vmax[j]), 0.01);
+      const pr = trapProfileN(qi[j], qf[j], a[j], T, N);
+      const s  = j===0 ? 0 : 1; // skip duplicate boundary point
+      for(let i = s; i < pr.q.length; i++){
+        allT.push(t_off + pr.t[i]);
+        for(let jj = 0; jj < 4; jj++){
+          if(jj === j){
+            allQ[jj].push(pr.q[i]); allQd[jj].push(pr.qd[i]); allQdd[jj].push(pr.qdd[i]);
+          } else {
+            allQ[jj].push(jj < j ? qf[jj] : qi[jj]);
+            allQd[jj].push(0); allQdd[jj].push(0);
+          }
+        }
+      }
+      t_off += T;
+    }
+    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf};
+  } else {
+    // simultaneo y aso: misma duración T para todos los ejes
+    const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
+    const T = Math.max(...tmins, 0.01);
+    const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
+    const joints = [];
+    for(let j = 0; j < 4; j++){
+      const pr = trapProfileN(qi[j], qf[j], a[j], T, N);
+      joints.push({q:pr.q, qd:pr.qd, qdd:pr.qdd});
+    }
+    return {joints, t:allT, tTotal:T, qi, qf};
+  }
+}
+
+// ── Cúbico: eje_eje | simultaneo | aso ──
+function buildTrajCubico(qi, qf, a, vmax, N, tipo){
+  if(tipo === 'eje_eje'){
+    const allT=[], allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
+    let t_off = 0;
+    for(let j = 0; j < 4; j++){
+      const T  = Math.max(trapMinTime(qi[j], qf[j], a[j], vmax[j]), 0.01);
+      const pr = cubicSplineN([qi[j], qf[j]], [0, T], N);
+      const s  = j===0 ? 0 : 1;
+      for(let i = s; i < pr.q.length; i++){
+        allT.push(t_off + pr.t[i]);
+        for(let jj = 0; jj < 4; jj++){
+          if(jj === j){
+            allQ[jj].push(pr.q[i]); allQd[jj].push(pr.qd[i]); allQdd[jj].push(pr.qdd[i]);
+          } else {
+            allQ[jj].push(jj < j ? qf[jj] : qi[jj]);
+            allQd[jj].push(0); allQdd[jj].push(0);
+          }
+        }
+      }
+      t_off += T;
+    }
+    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf};
+  } else {
+    const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
+    const T = Math.max(...tmins, 0.01);
+    const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
+    const joints = [];
+    for(let j = 0; j < 4; j++){
+      const pr = cubicSplineN([qi[j], qf[j]], [0, T], N);
+      joints.push({q:pr.q, qd:pr.qd, qdd:pr.qdd});
+    }
+    return {joints, t:allT, tTotal:T, qi, qf};
+  }
+}
+
+// ── Analítica: línea recta en espacio cartesiano vía CI ──
+function buildTrajAnalitica(qi, qf, N, a, vmax){
+  const fki = fkClosed(qi[0], qi[1], qi[2], qi[3]);
+  const fkf = fkClosed(qf[0], qf[1], qf[2], qf[3]);
+
+  // Tiempo basado en el eje más lento
+  const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
+  const T = Math.max(...tmins, 0.5);
+
+  const allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
+  const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
+
+  for(let i = 0; i < N; i++){
+    const s    = i / (N-1);
+    const blend = 3*s*s - 2*s*s*s; // smooth-step
+    // Interpolación lineal en espacio cartesiano
+    const px = fki.px + (fkf.px - fki.px)*blend;
+    const py = fki.py + (fkf.py - fki.py)*blend;
+    const pz = fki.pz + (fkf.pz - fki.pz)*blend;
+    const th = qi[3]  + (qf[3]  - qi[3]) *blend;
+    // CI para obtener coordenadas articulares
+    const tr = thetaRealRad(th);
+    const c  = Math.cos(tr), sv = Math.sin(tr);
+    const d2 = px;
+    const d1 = py - L2*(c - 1);
+    const d3 = Z_REF - pz - L2*sv;
+    allQ[0].push(Math.max(0, Math.min(LIM.x, d2)));
+    allQ[1].push(Math.max(0, Math.min(LIM.y, d1)));
+    allQ[2].push(Math.max(0, Math.min(LIM.z, d3)));
+    allQ[3].push(Math.max(0, Math.min(74, th)));
+  }
+  // Velocidad por diferencias finitas centrales
+  for(let j = 0; j < 4; j++){
+    for(let i = 0; i < N; i++){
+      let v = 0;
+      if(i === 0)       v = N>1 ? (allQ[j][1]-allQ[j][0])/(allT[1]-allT[0]) : 0;
+      else if(i === N-1) v = (allQ[j][N-1]-allQ[j][N-2])/(allT[N-1]-allT[N-2]);
+      else              v = (allQ[j][i+1]-allQ[j][i-1])/(allT[i+1]-allT[i-1]);
+      allQd[j].push(v);
+    }
+    for(let i = 0; i < N; i++){
+      let acc = 0;
+      if(i > 0 && i < N-1){
+        const dt = allT[i+1]-allT[i-1];
+        acc = dt>0 ? (allQd[j][i+1]-allQd[j][i-1])/dt : 0;
+      }
+      allQdd[j].push(acc);
+    }
+  }
+  return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:T, qi, qf};
+}
+
+// ── Dibujar proyección XY ──
+function drawTraj2D(){
+  const canvas = document.getElementById('canvas_traj2d');
+  if(!canvas || !trajData) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Calcular puntos de efector final
+  const pts = trajData.joints[0].q.map((x,i)=>{
+    const fk = fkClosed(x, trajData.joints[1].q[i], trajData.joints[2].q[i], trajData.joints[3].q[i]);
+    return {x:fk.px, y:fk.py};
+  });
+
+  // Rango con margen
+  const margin = {t:30, r:20, b:30, l:50};
+  let xMin=Infinity,xMax=-Infinity,yMin=Infinity,yMax=-Infinity;
+  pts.forEach(p=>{ xMin=Math.min(xMin,p.x);xMax=Math.max(xMax,p.x);yMin=Math.min(yMin,p.y);yMax=Math.max(yMax,p.y); });
+  xMin=Math.min(xMin,0); xMax=Math.max(xMax,1); yMin=Math.min(yMin,0); yMax=Math.max(yMax,1);
+  const xSpan=xMax-xMin, ySpan=yMax-yMin;
+  const cW=W-margin.l-margin.r, cH=H-margin.t-margin.b;
+  const sc = Math.min(cW/xSpan, cH/ySpan) * 0.85;
+  const ox = margin.l + (cW - xSpan*sc)/2;
+  const oy = margin.t + cH - (cH - ySpan*sc)/2;
+  const toX = v => ox + (v - xMin)*sc;
+  const toY = v => oy - (v - yMin)*sc;
+
+  // Fondo
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+
+  // Cuadrícula
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=0.8;
+  const gStepX = xSpan > 100 ? 50 : xSpan > 20 ? 10 : 5;
+  const gStepY = ySpan > 100 ? 50 : ySpan > 20 ? 10 : 5;
+  const x0g = Math.ceil(xMin/gStepX)*gStepX;
+  const y0g = Math.ceil(yMin/gStepY)*gStepY;
+  ctx.beginPath();
+  for(let x=x0g;x<=xMax;x+=gStepX){ ctx.moveTo(toX(x),margin.t); ctx.lineTo(toX(x),margin.t+cH); }
+  for(let y=y0g;y<=yMax;y+=gStepY){ ctx.moveTo(margin.l,toY(y)); ctx.lineTo(margin.l+cW,toY(y)); }
+  ctx.stroke();
+
+  // Ejes
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(toX(xMin),toY(yMin)); ctx.lineTo(toX(xMax),toY(yMin));
+  ctx.moveTo(toX(xMin),toY(yMin)); ctx.lineTo(toX(xMin),toY(yMax));
+  ctx.stroke();
+
+  // Etiquetas de ejes
+  ctx.fillStyle='#94a3b8'; ctx.font='9px Inter,sans-serif';
+  for(let x=x0g;x<=xMax;x+=gStepX){ ctx.fillText(x, toX(x)-8, H-8); }
+  for(let y=y0g;y<=yMax;y+=gStepY){ ctx.fillText(y, 2, toY(y)+4); }
+  ctx.fillStyle='#475569'; ctx.font='bold 9px Inter,sans-serif';
+  ctx.fillText('Px (mm)', W/2-20, H-2);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Py (mm)', 0, 0); ctx.restore();
+
+  // Trayectoria con gradiente verde→rojo
+  if(pts.length > 1){
+    for(let i=0;i<pts.length-1;i++){
+      const t_n = i/(pts.length-1);
+      const r = Math.round(220 * t_n);
+      const g = Math.round(150 * (1-t_n));
+      ctx.strokeStyle = `rgb(${r},${g},60)`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(toX(pts[i].x), toY(pts[i].y));
+      ctx.lineTo(toX(pts[i+1].x), toY(pts[i+1].y));
+      ctx.stroke();
+    }
+  }
+
+  // Marcadores inicio y fin
+  const p0=pts[0], pN=pts[pts.length-1];
+  ctx.fillStyle='#059669'; ctx.beginPath(); ctx.arc(toX(p0.x),toY(p0.y),6,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(toX(pN.x),toY(pN.y),6,0,Math.PI*2); ctx.fill();
+}
+
+// ── Simulación animada ──
+function simulateTraj(){
+  if(!trajData){ showTrajStatus('Primero crea una trayectoria.','red'); return; }
+  if(trajAnimRunning){ trajAnimRunning=false; document.getElementById('btnSimTraj').textContent='⬤  Simular'; return; }
+  trajAnimRunning=true;
+  trajAnimIdx=0;
+  document.getElementById('btnSimTraj').textContent='■  Detener';
+  const totalPts = trajData.t.length;
+  const delay = Math.max(40, Math.round((trajData.tTotal*1000)/totalPts));
+
+  // Precalcular puntos EF
+  const efPts = trajData.joints[0].q.map((x,i)=>{
+    const fk=fkClosed(x, trajData.joints[1].q[i], trajData.joints[2].q[i], trajData.joints[3].q[i]);
+    return {x:fk.px, y:fk.py};
+  });
+  // Calcular escala una sola vez
+  const margin={t:30,r:20,b:30,l:50};
+  let xMin=0,xMax=1,yMin=0,yMax=1;
+  efPts.forEach(p=>{ xMin=Math.min(xMin,p.x);xMax=Math.max(xMax,p.x);yMin=Math.min(yMin,p.y);yMax=Math.max(yMax,p.y); });
+  const canvas=document.getElementById('canvas_traj2d');
+  const W=canvas.width, H=canvas.height;
+  const cW=W-margin.l-margin.r, cH=H-margin.t-margin.b;
+  const sc=Math.min(cW/(xMax-xMin),cH/(yMax-yMin))*0.85;
+  const ox=margin.l+(cW-(xMax-xMin)*sc)/2;
+  const oy=margin.t+cH-(cH-(yMax-yMin)*sc)/2;
+  const toX=v=>ox+(v-xMin)*sc;
+  const toY=v=>oy-(v-yMin)*sc;
+
+  function step(){
+    if(!trajAnimRunning||trajAnimIdx>=totalPts){
+      trajAnimRunning=false;
+      document.getElementById('btnSimTraj').textContent='⬤  Simular';
+      return;
+    }
+    drawTraj2D();
+    const ctx=canvas.getContext('2d');
+    const p=efPts[trajAnimIdx];
+    ctx.fillStyle='#2563eb';
+    ctx.beginPath(); ctx.arc(toX(p.x),toY(p.y),5,0,Math.PI*2); ctx.fill();
+    trajAnimIdx++;
+    setTimeout(step, delay);
+  }
+  step();
+}
+
+// ── Enviar trayectoria al Arduino ──
+async function sendTrajToArduino(){
+  if(!trajData){ showTrajStatus('Primero crea una trayectoria.','red'); return; }
+  const N  = trajData.t.length;
+  const dt = Math.max(100, Math.round(trajData.tTotal*1000/N));
+  showTrajStatus(`Enviando ${N} puntos… (${dt} ms/punto)`, '');
+  for(let i=0;i<N;i++){
+    const x  = trajData.joints[0].q[i].toFixed(1);
+    const y  = trajData.joints[1].q[i].toFixed(1);
+    const z  = trajData.joints[2].q[i].toFixed(1);
+    const sv = trajData.joints[3].q[i].toFixed(1);
+    await sendCmd(`G1 X${x} Y${y} Z${z} S${sv}`);
+    await new Promise(r=>setTimeout(r, dt));
+  }
+  showTrajStatus(`✓ Enviados ${N} puntos al Arduino.`, 'green');
+}
+
+function clearTraj(){
+  trajData=null; trajAnimRunning=false;
+  document.getElementById('traj_status').style.display='none';
+  document.getElementById('traj_info_bar').style.display='none';
+  document.getElementById('traj_overlay').style.display='flex';
+  document.getElementById('btnSimTraj').textContent='⬤  Simular';
+  const canvas=document.getElementById('canvas_traj2d');
+  if(canvas){ const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+  clearPerfiles();
+}
+
+function showTrajStatus(msg, color){
+  const el=document.getElementById('traj_status');
+  el.style.display='block';
+  el.style.color = color==='green'?'var(--green)':color==='red'?'var(--red)':'var(--muted2)';
+  el.innerHTML=msg;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PERFILES — Gráficas de posición / velocidad / aceleración
+// ══════════════════════════════════════════════════════════════
+function initPerfilesPanel(){
+  const hasData = !!trajData;
+  document.getElementById('perfiles_msg').style.display   = hasData ? 'none'  : 'flex';
+  document.getElementById('perfiles_charts').style.display= hasData ? 'grid'  : 'none';
+  if(hasData) setTimeout(drawAllProfiles, 30);
+}
+
+function drawAllProfiles(){
+  if(!trajData) return;
+  const colors = ['#2563eb','#059669','#dc2626','#7c3aed'];
+  const rowTitles = ['Posición','Velocidad','Aceleración'];
+  const rowUnits  = [['mm','mm','mm','°'],['mm/s','mm/s','mm/s','°/s'],['mm/s²','mm/s²','mm/s²','°/s²']];
+  const dataKeys  = ['q','qd','qdd'];
+
+  for(let j=0;j<4;j++){
+    for(let r=0;r<3;r++){
+      const cv = document.getElementById(`perf_c${j}_${r}`);
+      if(!cv) continue;
+      // Ajustar resolución del canvas a su tamaño CSS real
+      const rect = cv.getBoundingClientRect();
+      if(rect.width > 0){ cv.width=Math.round(rect.width); cv.height=Math.round(rect.height||110); }
+      const data = trajData.joints[j][dataKeys[r]];
+      const label = `${rowTitles[r]}  (${rowUnits[r][j]})`;
+      drawProfileChart(cv, trajData.t, data, colors[j], label);
+    }
+  }
+}
+
+function drawProfileChart(canvas, t, data, color, title){
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const mg = {top:20, right:8, bottom:18, left:40};
+  const cW = W-mg.left-mg.right;
+  const cH = H-mg.top-mg.bottom;
+  if(!data||data.length<2||cW<10||cH<10) return;
+
+  // Fondo
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+
+  // Título
+  ctx.fillStyle='#475569'; ctx.font='bold 8px Inter,sans-serif';
+  ctx.fillText(title, mg.left, 12);
+
+  // Rango Y
+  let yMin=Infinity, yMax=-Infinity;
+  data.forEach(v=>{ if(isFinite(v)){ yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); } });
+  if(!isFinite(yMin)||yMin===yMax){ yMin=yMin-1; yMax=yMax+1; }
+  const yPad=(yMax-yMin)*0.12; yMin-=yPad; yMax+=yPad;
+
+  const tMin=t[0], tMax=t[t.length-1], tSpan=Math.max(tMax-tMin,0.001);
+  const toX=v=>mg.left+(v-tMin)/tSpan*cW;
+  const toY=v=>mg.top+(1-(v-yMin)/(yMax-yMin))*cH;
+
+  // Cuadrícula Y (4 líneas)
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=0.6;
+  for(let k=0;k<=4;k++){
+    const y=mg.top+k*cH/4;
+    ctx.beginPath(); ctx.moveTo(mg.left,y); ctx.lineTo(mg.left+cW,y); ctx.stroke();
+    const val=yMax-k*(yMax-yMin)/4;
+    ctx.fillStyle='#94a3b8'; ctx.font='7px Inter,sans-serif';
+    const lbl=Math.abs(val)<1e-4?'0':val.toFixed(Math.abs(val)<10?1:0);
+    ctx.fillText(lbl, 0, y+3);
+  }
+
+  // Línea cero
+  if(yMin<0&&yMax>0){
+    const y0=toY(0);
+    ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(mg.left,y0); ctx.lineTo(mg.left+cW,y0); ctx.stroke();
+  }
+
+  // Bordes de la gráfica
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=0.8;
+  ctx.strokeRect(mg.left, mg.top, cW, cH);
+
+  // Curva de datos
+  ctx.strokeStyle=color; ctx.lineWidth=1.8;
+  ctx.beginPath();
+  for(let i=0;i<data.length;i++){
+    const px=toX(t[i]), py=toY(data[i]);
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Etiquetas tiempo
+  ctx.fillStyle='#94a3b8'; ctx.font='7px Inter,sans-serif';
+  ctx.fillText(tMin.toFixed(2), mg.left, H-3);
+  ctx.fillText(tMax.toFixed(2), mg.left+cW-14, H-3);
+
+  // Marcadores verticales en puntos de cambio de perfil (breakpoints)
+  // Para trapezoidal eje-a-eje, marcar donde cambia el segmento activo
+  markBreakpoints(ctx, t, data, toX, mg, cH, color);
+}
+
+// Marca con línea vertical punteada los instantes donde la aceleración cambia de signo
+function markBreakpoints(ctx, t, data, toX, mg, cH, color){
+  ctx.save();
+  ctx.strokeStyle=color+'88'; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
+  const N=data.length;
+  for(let i=1;i<N-1;i++){
+    // Cambio brusco en la serie (e.g. la aceleración pasa por cero en trapezoidal)
+    if(Math.abs(data[i]-data[i-1])>1e-9 && Math.sign(data[i])!==Math.sign(data[i-1])){
+      const px=toX(t[i]);
+      ctx.beginPath(); ctx.moveTo(px,mg.top); ctx.lineTo(px,mg.top+cH); ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function clearPerfiles(){
+  for(let j=0;j<4;j++){
+    for(let r=0;r<3;r++){
+      const cv=document.getElementById(`perf_c${j}_${r}`);
+      if(cv){ const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); }
+    }
+  }
+}
 
 </script>
 <div style="position:fixed;bottom:12px;right:14px;z-index:9999;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.35);border-radius:8px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#7c3aed;letter-spacing:.5px;backdrop-filter:blur(8px);pointer-events:none" title="Recarga forzada si no ves los cambios: Cmd+Shift+R">v1.7 · 24 mar 2026</div>
