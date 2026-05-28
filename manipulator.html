@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Manipulador Lineal — HMI · CD v1.7</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#f4f6f9;--bg1:#eaecf1;--bg2:#dfe2e8;
+  --glass:rgba(255,255,255,.7);--glass2:rgba(255,255,255,.55);
+  --gb:rgba(0,0,0,.1);
+  --blue:#2563eb;--cyan:#0891b2;--purple:#7c3aed;
+  --green:#059669;--red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;
+  --text:#1e293b;--muted:#64748b;--muted2:#475569;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--rs:8px;
+}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--font);font-size:13px;overflow:hidden}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%,rgba(59,130,246,.06) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%,rgba(168,85,247,.05) 0%,transparent 60%),
+    radial-gradient(ellipse 30% 30% at 50% 50%,rgba(6,182,212,.03) 0%,transparent 70%);
+}
+.app{position:relative;z-index:1;display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:210px;flex-shrink:0;
+  background:rgba(255,255,255,.85);
+  border-right:1px solid var(--gb);
+  backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sidebar-logo{
+  padding:16px 14px 12px;
+  border-bottom:1px solid var(--gb);
+  display:flex;align-items:center;gap:10px;
+}
+.logo-icon{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 18px rgba(59,130,246,.4);
+}
+.logo-icon svg{width:18px;height:18px;color:#fff}
+.logo-name{font-size:14px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--muted2);line-height:1.2}
+.nav-section{padding:10px 0}
+.nav-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:6px 14px 4px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all .15s;
+  font-size:12px;font-weight:500;color:var(--muted2);
+}
+.nav-item:hover{background:var(--glass2);color:var(--text)}
+.nav-item.active{
+  background:rgba(37,99,235,.1);
+  border-left-color:var(--blue);color:var(--text);
+}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-divider{height:1px;background:var(--gb);margin:4px 0}
+
+/* ── Content ── */
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.panel{display:none;flex:1;overflow:hidden}
+.panel.active{display:flex;flex-direction:column}
+
+/* ── Panel header ── */
+.panel-header{
+  padding:12px 20px;
+  background:rgba(255,255,255,.8);
+  border-bottom:1px solid var(--gb);
+  backdrop-filter:blur(20px);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.panel-title{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.panel-sub{font-size:11px;color:var(--muted2)}
+#connBadge{
+  margin-left:auto;display:flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid var(--gb);background:rgba(255,255,255,.6);backdrop-filter:blur(10px);
+  transition:all .3s;
+}
+#connBadge.connected{border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.1);color:var(--green)}
+#connBadge.disconnected{color:var(--muted2)}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+#connBadge.connected .badge-dot{animation:pulse 1.8s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── Cards ── */
+.card{
+  background:var(--glass);border:1px solid var(--gb);
+  border-radius:var(--r);padding:14px;
+  backdrop-filter:blur(20px);
+}
+.card:hover{border-color:rgba(255,255,255,.12)}
+.ct{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--muted2);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.ct-bar{width:16px;height:2px;border-radius:1px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+
+/* ── Inputs ── */
+select,input[type=text],input[type=number]{
+  width:100%;background:#fff;
+  border:1px solid var(--gb);border-radius:var(--rs);
+  color:var(--text);padding:7px 10px;font-size:12px;font-family:var(--font);
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+select:focus,input:focus{border-color:rgba(37,99,235,.5);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+select option{background:#fff}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:7px 14px;border:none;border-radius:var(--rs);
+  font-size:12px;font-weight:600;font-family:var(--font);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;box-shadow:0 0 16px rgba(59,130,246,.3)}
+.btn-secondary{background:#fff;color:var(--text);border:1px solid var(--gb);backdrop-filter:blur(10px)}
+.btn-green{background:linear-gradient(135deg,var(--green),#059669);color:#fff;box-shadow:0 0 12px rgba(16,185,129,.2)}
+.btn-red{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;box-shadow:0 0 12px rgba(239,68,68,.2)}
+.btn-orange{background:linear-gradient(135deg,var(--orange),#ea580c);color:#fff;box-shadow:0 0 12px rgba(249,115,22,.2)}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--gb)}
+.btn-ghost:hover{color:var(--text)}
+.btn-full{width:100%}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px;border-radius:6px}
+
+/* ── Jog button ── */
+.jbtn{
+  width:44px;height:38px;background:#fff;border:1px solid var(--gb);
+  border-radius:9px;color:var(--text);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.jbtn:hover:not(:disabled){background:linear-gradient(135deg,var(--blue),var(--cyan));border-color:transparent;color:#fff;box-shadow:0 0 14px rgba(59,130,246,.4);transform:scale(1.05)}
+.jbtn:active:not(:disabled){transform:scale(.93)}
+.jbtn:disabled{opacity:.25;cursor:not-allowed}
+
+/* ── Position cards ── */
+.pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pos-card{
+  background:var(--glass);border:1px solid var(--gb);
+  border-radius:10px;padding:10px;text-align:center;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.pos-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--c,var(--blue)),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.pos-card.homed::before{opacity:1}
+.pos-card.homed{border-color:rgba(16,185,129,.25)}
+.pos-lbl{font-size:9px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.pos-val{font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:var(--muted);transition:all .3s}
+.pos-card.homed .pos-val{color:var(--c,var(--green));text-shadow:none}
+.pos-unit{font-size:9px;color:var(--muted2);margin-top:1px}
+.pos-bar{margin-top:7px;height:3px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden}
+.pos-bar-fill{height:100%;border-radius:2px;background:var(--c,var(--blue));transition:width .4s ease}
+#pX{--c:#dc2626}#pY{--c:#059669}#pZ{--c:#2563eb}#pS{--c:var(--purple)}
+#pS .pos-val{color:var(--purple)!important;text-shadow:none!important}
+#pS::before{opacity:1!important}#pS{border-color:rgba(124,58,237,.25)!important}
+
+/* ── Motor bar ── */
+.motor-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;background:var(--glass);
+  border:1px solid var(--gb);border-radius:var(--rs);backdrop-filter:blur(10px);
+}
+.mled{width:9px;height:9px;border-radius:50%;background:var(--muted);transition:all .3s;flex-shrink:0}
+.mled.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.mled.off{background:var(--red);box-shadow:0 0 4px var(--red);animation:blink .8s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.mlbl{font-size:11px;font-weight:500}
+
+/* ── Jog axis block ── */
+.jog-ax{background:var(--glass);border:1px solid var(--gb);border-radius:10px;padding:11px;backdrop-filter:blur(10px)}
+.jog-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.jog-nm{font-size:15px;font-weight:800;font-family:var(--mono)}
+.jog-nm.x{color:#dc2626;text-shadow:none}
+.jog-nm.y{color:#059669;text-shadow:none}
+.jog-nm.z{color:#2563eb;text-shadow:none}
+.steps{display:flex;gap:3px;flex-wrap:wrap}
+.sbtn{
+  padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700;
+  background:#fff;border:1px solid var(--gb);
+  color:var(--muted2);cursor:pointer;transition:all .15s;font-family:var(--mono);
+}
+.sbtn.active{background:linear-gradient(135deg,var(--blue),var(--cyan));border-color:transparent;color:#fff;box-shadow:0 0 8px rgba(59,130,246,.3)}
+.jog-row{display:flex;align-items:center;gap:8px}
+.jog-info{flex:1;text-align:center;font-size:10px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── Servo ── */
+.servo-big{font-size:42px;font-weight:800;font-family:var(--mono);color:var(--purple);text-shadow:none;letter-spacing:-2px}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:4px;
+  border-radius:2px;background:rgba(0,0,0,.1);outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),#7c3aed);cursor:pointer;
+  border:2px solid rgba(255,255,255,.2);box-shadow:0 0 10px rgba(168,85,247,.5);
+  transition:transform .1s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range]:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── HTM Matrix display ── */
+.mat-wrap{
+  display:inline-flex;align-items:stretch;gap:0;
+  background:rgba(0,0,0,.04);padding:10px 6px;
+  border-radius:8px;border:1px solid var(--gb);
+}
+.mat-bracket{
+  display:flex;flex-direction:column;justify-content:space-between;
+  color:var(--muted2);font-size:11px;font-weight:300;
+  padding:0 3px;
+}
+.mat-inner{display:flex;flex-direction:column;gap:5px}
+.mat-row{display:flex;gap:14px}
+.mat-cell{
+  font-family:var(--mono);font-size:11px;
+  color:var(--text);min-width:65px;text-align:right;
+}
+.mat-cell.zero{color:#94a3b8}
+.mat-cell.one{color:var(--cyan)}
+.mat-cell.cos{color:#dc2626}
+.mat-cell.sin{color:#059669}
+.mat-cell.pos{color:var(--yellow)}
+
+.mat-eq{
+  display:grid;grid-template-columns:auto auto auto auto auto auto auto;
+  align-items:center;gap:14px;
+}
+.mat-label{font-size:11px;font-weight:700;color:var(--muted2);font-family:var(--mono);white-space:nowrap}
+.mat-times{color:var(--muted);font-size:14px}
+
+.kin-step{
+  background:rgba(0,0,0,.03);border:1px solid var(--gb);
+  border-radius:8px;padding:10px 12px;margin-bottom:8px;
+}
+.kin-step-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:6px}
+.kin-formula{font-family:var(--mono);font-size:12px;color:var(--cyan);line-height:1.8}
+.kin-result{font-family:var(--mono);font-size:13px;color:var(--green);font-weight:600;margin-top:4px}
+
+/* ── Terminal ── */
+.terminal{
+  background:#fff;border:1px solid var(--gb);
+  border-radius:10px;padding:10px 12px;
+  font-family:var(--mono);font-size:11px;overflow-y:auto;
+  flex:1;
+}
+.tl{margin:1px 0;line-height:1.6;display:flex;gap:8px}
+.tts{color:rgba(0,0,0,.25);flex-shrink:0}
+.tmsg{word-break:break-all}
+.tl.rx .tmsg{color:#475569}
+.tl.tx .tmsg{color:var(--cyan)}
+.tl.tx .tmsg::before{content:'▶ ';opacity:.7}
+.tl.sys .tmsg{color:var(--orange)}
+.tl.err .tmsg{color:var(--red)}
+.tl.ok  .tmsg{color:var(--green)}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:2px}
+
+/* ── Home panel layout ── */
+#panel-home .body{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden;gap:0}
+#panel-home .left{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)}
+#panel-home .right{position:relative;overflow:hidden}
+#canvas3d{width:100%;height:100%;display:block}
+.canvas-overlay{
+  position:absolute;bottom:14px;left:14px;
+  background:rgba(255,255,255,.85);border:1px solid var(--gb);
+  border-radius:8px;padding:8px 12px;backdrop-filter:blur(10px);
+  font-size:10px;color:var(--muted2);font-family:var(--mono);line-height:1.8;
+}
+.canvas-overlay span{color:var(--text)}
+.canvas-controls{
+  position:absolute;top:14px;right:14px;
+  display:flex;flex-direction:column;gap:6px;
+}
+
+/* ── Control panel layout ── */
+#panel-control .body{display:grid;grid-template-columns:1fr 280px;flex:1;overflow:hidden}
+#panel-control .left{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)}
+#panel-control .right{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* ── Kin panels ── */
+.kin-body{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden}
+.kin-left{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)}
+.kin-right{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* ── HTM panel ── */
+#panel-htm .body{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:16px;flex:1}
+.htm-row{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.htm-block{}
+.htm-blabel{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:8px;font-family:var(--mono)}
+
+/* ── Goto grid ── */
+.goto-row{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:8px;margin-bottom:8px}
+.goto-lbl{font-weight:800;font-size:13px;font-family:var(--mono)}
+.goto-lbl.x{color:#dc2626}.goto-lbl.y{color:#059669}.goto-lbl.z{color:#2563eb}
+
+/* ── Method tabs ── */
+.method-tabs{display:flex;gap:6px;margin-bottom:12px}
+.mtab{
+  flex:1;padding:7px;text-align:center;border-radius:8px;cursor:pointer;
+  font-size:11px;font-weight:600;border:1px solid var(--gb);color:var(--muted2);
+  background:var(--glass);transition:all .15s;
+}
+.mtab.active{background:linear-gradient(135deg,var(--blue),var(--cyan));border-color:transparent;color:#fff;box-shadow:0 0 12px rgba(59,130,246,.3)}
+
+/* ── Dinámica Lagrange-Euler ── */
+#panel-dynamics .le-left{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)}
+#panel-dynamics .le-right{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+
+.le-dh-table{width:100%;border-collapse:collapse;font-size:11px}
+.le-dh-table th{padding:4px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--muted2);border-bottom:2px solid var(--gb);letter-spacing:.5px}
+.le-dh-table td{padding:3px 3px}
+.le-dh-table td input{width:100%;padding:5px 6px;border-radius:5px;border:1px solid var(--gb);background:rgba(255,255,255,.85);color:var(--text);font-size:11px;font-family:var(--mono);text-align:center}
+.le-dh-table td input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+.le-dh-table .le-row-lbl{text-align:center;font-weight:800;font-size:12px;color:var(--muted2);padding:0 6px;font-family:var(--mono)}
+
+.le-link-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.le-link-inp{padding:5px 4px;border-radius:5px;border:1px solid var(--gb);background:rgba(255,255,255,.85);color:var(--text);font-size:11px;font-family:var(--mono);text-align:center;width:100%}
+.le-link-inp:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(8,145,178,.12)}
+.le-lbl{font-size:9px;color:var(--muted2);display:block;margin-bottom:2px;font-weight:600;text-align:center}
+
+.sym-mat-scroll{overflow-x:auto;margin-top:6px;border:1px solid var(--gb);border-radius:8px}
+.sym-mat{border-collapse:collapse;font-family:var(--mono);font-size:10.5px;width:100%}
+.sym-mat td{padding:6px 10px;border:1px solid rgba(0,0,0,.06);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;color:var(--cyan)}
+.sym-mat td.sym-diag{color:var(--blue);font-weight:700;background:rgba(37,99,235,.05)}
+.sym-mat td.sym-zero{color:var(--muted);opacity:.5;font-style:italic}
+.sym-mat tr:first-child td{border-top:none}
+.sym-mat tr:last-child td{border-bottom:none}
+.sym-mat tr td:first-child{border-left:none}
+.sym-mat tr td:last-child{border-right:none}
+
+.sym-vec-item{display:flex;gap:10px;align-items:flex-start;padding:7px 2px;border-bottom:1px solid var(--gb);font-family:var(--mono);font-size:11px}
+.sym-vec-item:last-child{border-bottom:none}
+.sym-vec-lbl{color:var(--muted2);flex-shrink:0;font-weight:700;min-width:32px;padding-top:1px}
+.sym-vec-val{color:var(--cyan);word-break:break-all;line-height:1.65}
+.sym-vec-val.sym-zero{color:var(--muted);opacity:.55;font-style:italic}
+
+.le-eq-block{font-family:var(--mono);font-size:11px;color:var(--cyan);word-break:break-all;line-height:1.7;padding:6px 0}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="9" width="3" height="6" rx="1"/><rect x="10" y="5" width="4" height="14" rx="1"/>
+        <rect x="19" y="10" width="3" height="5" rx="1"/><line x1="5" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="19" y2="12"/>
+      </svg>
+    </div>
+    <div><div class="logo-name">Manipulador</div><div class="logo-sub">HMI de Control</div></div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="showPanel('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Vista 3D
+    </div>
+    <div class="nav-item" onclick="showPanel('control')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      Control Manual
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Cinemática</div>
+    <div class="nav-item" onclick="showPanel('direct')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+      Cinemática Directa
+    </div>
+    <div class="nav-item" onclick="showPanel('inverse')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+      Cinemática Inversa
+    </div>
+    <div class="nav-item" onclick="showPanel('htm')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Matrices MTH
+    </div>
+    <div class="nav-item" onclick="showPanel('volume')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Volumen de Trabajo
+    </div>
+    <div class="nav-item" onclick="showPanel('dynamics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Dinámica L-E
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Sistema</div>
+    <div class="nav-item" onclick="showPanel('test')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      Prueba Motores
+    </div>
+    <div class="nav-item" onclick="showPanel('terminal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      Terminal Serial
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div class="content">
+
+<!-- ── PANEL: Vista 3D ── -->
+<div id="panel-home" class="panel active">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Vista 3D — Robot en Tiempo Real</div>
+      <div class="panel-sub">Visualización del manipulador · X 265mm · Y 190mm · Z 120mm · Servo 0–74° real</div>
+    </div>
+    <div id="connBadge" class="disconnected">
+      <span class="badge-dot"></span><span id="connText">Desconectado</span>
+    </div>
+  </div>
+  <div class="body" style="display:grid;grid-template-columns:255px 1fr;flex:1;overflow:hidden">
+    <div style="overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+
+      <!-- Conexión -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Conexión Serial</div>
+        <div style="display:flex;gap:5px;margin-bottom:7px">
+          <select id="portSelect"><option value="">Puerto…</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="refreshPorts()">↺</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
+          <span style="font-size:10px;color:var(--muted2);white-space:nowrap">Baud</span>
+          <select id="baudSelect"><option value="9600" selected>9600</option><option value="115200">115200</option></select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button id="btnConn" class="btn btn-primary" onclick="connectSerial()">Conectar</button>
+          <button id="btnDisc" class="btn btn-secondary" onclick="disconnectSerial()" disabled>Desconectar</button>
+        </div>
+      </div>
+
+      <!-- Motor -->
+      <div class="motor-bar">
+        <div id="mled" class="mled off"></div>
+        <span id="mlbl" class="mlbl" style="color:var(--muted2)">Motores —</span>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button class="btn btn-xs btn-green" onclick="sendCmd('ON')"   id="btnOn"   disabled>ON</button>
+          <button class="btn btn-xs btn-red"   onclick="sendCmd('STOP')" id="btnStop" disabled>STOP</button>
+        </div>
+      </div>
+
+      <!-- Posición -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Posición Actual</div>
+        <div class="pos-grid">
+          <div class="pos-card unhomed" id="pX"><div class="pos-lbl">Eje X</div><div class="pos-val" id="vX">—</div><div class="pos-unit">mm / 265</div><div class="pos-bar"><div class="pos-bar-fill" id="bX" style="width:0%"></div></div></div>
+          <div class="pos-card unhomed" id="pY"><div class="pos-lbl">Eje Y</div><div class="pos-val" id="vY">—</div><div class="pos-unit">mm / 190</div><div class="pos-bar"><div class="pos-bar-fill" id="bY" style="width:0%"></div></div></div>
+          <div class="pos-card unhomed" id="pZ"><div class="pos-lbl">Eje Z</div><div class="pos-val" id="vZ">—</div><div class="pos-unit">mm / 120</div><div class="pos-bar"><div class="pos-bar-fill" id="bZ" style="width:0%"></div></div></div>
+          <div class="pos-card" id="pS"><div class="pos-lbl">Servo θ</div><div class="pos-val" id="vS">36</div><div class="pos-unit">° real / [0,74]</div><div class="pos-bar"><div class="pos-bar-fill" id="bS" style="width:48.6%"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Homing -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Homing</div>
+        <button class="btn btn-orange btn-full btn-sm" onclick="sendCmd('HOMEALL')" id="btnHomeAll" disabled style="margin-bottom:7px">⌂ HOMEALL</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+          <button class="btn btn-secondary btn-xs btn-full" onclick="sendCmd('HOMEX')" id="bHX" disabled>HOME X</button>
+          <button class="btn btn-secondary btn-xs btn-full" onclick="sendCmd('HOMEY')" id="bHY" disabled>HOME Y</button>
+          <button class="btn btn-secondary btn-xs btn-full" onclick="sendCmd('HOMEZ')" id="bHZ" disabled>HOME Z</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm btn-full" onclick="sendCmd('POS')" id="btnPos" disabled>📍 Consultar POS</button>
+    </div>
+
+    <!-- 3D Canvas -->
+    <div style="position:relative;overflow:hidden;background:#e8ebf0">
+      <canvas id="canvas3d"></canvas>
+      <div class="canvas-overlay" id="posOverlay">
+        EF: <span id="olX">X=—</span> · <span id="olY">Y=—</span> · <span id="olZ">Z=—</span> · <span id="olS">θ=0°</span>
+      </div>
+      <div class="canvas-controls">
+        <button class="btn btn-secondary btn-xs" onclick="resetCamera()">⟳ Vista</button>
+        <button class="btn btn-secondary btn-xs" onclick="toggleWire()">⬡ Wire</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Control Manual ── -->
+<div id="panel-control" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Control Manual — Jog</div><div class="panel-sub">Movimiento relativo por eje con pasos configurables</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 260px;flex:1;overflow:hidden">
+    <div style="overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Control de Ejes</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <!-- X -->
+          <div class="jog-ax"><div class="jog-hdr"><span class="jog-nm x">X</span>
+            <div class="steps" id="stX"><button class="sbtn" onclick="sStep('X',1)">1</button><button class="sbtn active" onclick="sStep('X',5)">5</button><button class="sbtn" onclick="sStep('X',10)">10</button><button class="sbtn" onclick="sStep('X',25)">25</button><button class="sbtn" onclick="sStep('X',50)">50</button><span style="font-size:9px;color:var(--muted2);align-self:center">mm</span></div></div>
+            <div class="jog-row"><button class="jbtn" onclick="jog('X',-1)" id="jXn" disabled>◀</button><div class="jog-info" id="lblX">paso: 5 mm</div><button class="jbtn" onclick="jog('X',1)" id="jXp" disabled>▶</button></div></div>
+          <!-- Y -->
+          <div class="jog-ax"><div class="jog-hdr"><span class="jog-nm y">Y</span>
+            <div class="steps" id="stY"><button class="sbtn" onclick="sStep('Y',1)">1</button><button class="sbtn active" onclick="sStep('Y',5)">5</button><button class="sbtn" onclick="sStep('Y',10)">10</button><button class="sbtn" onclick="sStep('Y',25)">25</button><button class="sbtn" onclick="sStep('Y',50)">50</button><span style="font-size:9px;color:var(--muted2);align-self:center">mm</span></div></div>
+            <div class="jog-row"><button class="jbtn" onclick="jog('Y',-1)" id="jYn" disabled>◀</button><div class="jog-info" id="lblY">paso: 5 mm</div><button class="jbtn" onclick="jog('Y',1)" id="jYp" disabled>▶</button></div></div>
+          <!-- Z -->
+          <div class="jog-ax"><div class="jog-hdr"><span class="jog-nm z">Z</span>
+            <div class="steps" id="stZ"><button class="sbtn" onclick="sStep('Z',1)">1</button><button class="sbtn active" onclick="sStep('Z',5)">5</button><button class="sbtn" onclick="sStep('Z',10)">10</button><button class="sbtn" onclick="sStep('Z',25)">25</button><button class="sbtn" onclick="sStep('Z',50)">50</button><span style="font-size:9px;color:var(--muted2);align-self:center">mm</span></div></div>
+            <div class="jog-row"><button class="jbtn" onclick="jog('Z',-1)" id="jZn" disabled>◀</button><div class="jog-info" id="lblZ">paso: 5 mm</div><button class="jbtn" onclick="jog('Z',1)" id="jZp" disabled>▶</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+      <!-- Servo -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Servo — θ real (igual que Arduino / POS)</div>
+        <p style="font-size:10px;color:var(--muted2);line-height:1.5;margin:0 0 8px">La cinemática usa <b>θ real compensado</b>: <code>θ_real = (θ4 - 36) × 2.368</code>. Aquí <b>36° = horizontal</b> y <b>74° ≈ abajo</b>.</p>
+        <div style="text-align:center;margin-bottom:10px"><span class="servo-big" id="sDsp">36</span><span style="font-size:18px;color:var(--muted2)">°</span></div>
+        <input type="range" id="sSlider" min="0" max="74" value="36" oninput="onSSlide(this.value)" onchange="sendServo(this.value)" disabled/>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted2);font-family:var(--mono);margin-top:3px"><span>0° arriba</span><span>36° horiz.</span><span>74° abajo</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" onclick="setServo(0)"   id="bS0"   disabled title="Brazo arriba (S0)">0°</button>
+          <button class="btn btn-secondary btn-sm" onclick="setServo(36)"  id="bS55"  disabled title="Brazo horizontal (S36)">36°</button>
+          <button class="btn btn-secondary btn-sm" onclick="setServo(74)"  id="bS110" disabled title="Brazo abajo (S74)">74°</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input type="number" id="sInp" min="0" max="74" value="36" placeholder="0–74 real"/>
+          <button class="btn btn-primary btn-sm" onclick="sendServoInput()" id="bSend" disabled>Enviar</button>
+        </div>
+      </div>
+
+      <!-- Posición absoluta -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Ir a Posición Absoluta</div>
+        <div class="goto-row"><span class="goto-lbl x">X</span><input type="number" id="gX" min="0" max="265" step="0.5" placeholder="0 – 265"/><button class="btn btn-xs btn-primary" onclick="gotoAx('X','gX',265)" id="bgX" disabled>Ir</button></div>
+        <div class="goto-row"><span class="goto-lbl y">Y</span><input type="number" id="gY" min="0" max="190" step="0.5" placeholder="0 – 190"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Y','gY',190)" id="bgY" disabled>Ir</button></div>
+        <div class="goto-row"><span class="goto-lbl z">Z</span><input type="number" id="gZ" min="0" max="120" step="0.5" placeholder="0 – 120"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Z','gZ',120)" id="bgZ" disabled>Ir</button></div>
+        <p style="font-size:10px;color:var(--muted2);margin-top:4px">Calcula delta desde posición actual y envía relativo.</p>
+      </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div style="overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Acciones</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <button class="btn btn-orange btn-full btn-sm" onclick="sendCmd('HOMEALL')" disabled id="bHA2">⌂ HOMEALL</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+            <button class="btn btn-secondary btn-xs" onclick="sendCmd('HOMEX')" disabled id="bHX2">HX</button>
+            <button class="btn btn-secondary btn-xs" onclick="sendCmd('HOMEY')" disabled id="bHY2">HY</button>
+            <button class="btn btn-secondary btn-xs" onclick="sendCmd('HOMEZ')" disabled id="bHZ2">HZ</button>
+          </div>
+          <button class="btn btn-secondary btn-sm btn-full" onclick="sendCmd('POS')" disabled id="bP2">📍 POS</button>
+          <button class="btn btn-green  btn-sm btn-full" onclick="sendCmd('ON')"   disabled id="bO2">Motores ON</button>
+          <button class="btn btn-red    btn-sm btn-full" onclick="sendCmd('STOP')" disabled id="bST2">STOP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Cinemática Directa ── -->
+<div id="panel-direct" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Cinemática Directa</div><div class="panel-sub">Dados los valores articulares → posición y orientación del efector final</div></div>
+  </div>
+  <div class="kin-body">
+    <div class="kin-left">
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Método</div>
+        <div class="method-tabs">
+          <div class="mtab active" id="mt-geom" onclick="setKinMethod('direct','geom')">Geométrico</div>
+          <div class="mtab" id="mt-dh"   onclick="setKinMethod('direct','dh')">Analítico (DH)</div>
+        </div>
+        <div class="ct"><div class="ct-bar"></div>Variables Articulares</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">q₁ = X (mm)</label><input type="number" id="dk_x" min="0" max="265" value="0" step="0.5" oninput="computeFK()"/></div>
+          <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">q₂ = Y (mm)</label><input type="number" id="dk_y" min="0" max="190" value="0" step="0.5" oninput="computeFK()"/></div>
+          <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">q₃ = Z (mm)</label><input type="number" id="dk_z" min="0" max="120" value="0" step="0.5" oninput="computeFK()"/></div>
+          <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">q₄ = θ servo real (°) — 36° horizontal</label><input type="number" id="dk_s" min="0" max="74" value="36" step="1" oninput="computeFK()"/></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrPos('dk')">← Usar posición actual</button>
+        <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendFKToRobot()" id="bFKSend" disabled>Enviar al Robot</button>
+      </div>
+    </div>
+    <div class="kin-right" id="fk-result">
+      <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa valores articulares para calcular la cinemática directa.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Cinemática Inversa ── -->
+<div id="panel-inverse" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Cinemática Inversa</div><div class="panel-sub">Dados Pₓ, Pᵧ, Pz y θ₄ → d₁, d₂, d₃ requeridos según T₀₄</div></div>
+  </div>
+  <div class="kin-body">
+    <div class="kin-left">
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Método</div>
+        <div class="method-tabs">
+          <div class="mtab active" id="ik-mt-geom" onclick="setKinMethod('inverse','geom')">Geométrico</div>
+          <div class="mtab" id="ik-mt-anal"        onclick="setKinMethod('inverse','anal')">Analítico</div>
+        </div>
+        <div class="ct"><div class="ct-bar"></div>Posición Deseada del Efector</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">Pₓ (mm) — posición X</label><input type="number" id="ik_px" min="0" max="265" value="56" step="0.5" oninput="computeIK()"/></div>
+          <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">Pᵧ (mm) — d₁ + 56·[cos(θ_real) − 1]</label><input type="number" id="ik_py" min="-60" max="190" value="0"  step="0.5" oninput="computeIK()"/></div>
+          <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">Pz (mm) — 295 − d₃ − 56·sin(θ_real)</label><input type="number" id="ik_pz" min="110" max="360" value="295"  step="0.5" oninput="computeIK()"/></div>
+          <p style="font-size:9px;color:var(--muted2);margin:-4px 0 0">Aquí ingresas la traslación de <b>T₀₄</b>; la orientación queda definida por <b>θ₄</b>, no por la carrera cruda del eje Z.</p>
+          <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">θ deseado (°) — servo real, 36° horizontal</label><input type="number" id="ik_th" min="0" max="74" value="36"  step="1"   oninput="computeIK()"/></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrentPoseForIK()">← Usar pose actual del efector</button>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="computeIK()">Calcular IK</button>
+        <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendIKToRobot()" id="bIKSend" disabled>Enviar al Robot</button>
+      </div>
+    </div>
+    <div class="kin-right" id="ik-result">
+      <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa la posición objetivo para calcular la cinemática inversa.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Matrices MTH ── -->
+<div id="panel-htm" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Matrices de Transformación Homogénea (MTH)</div><div class="panel-sub">CD Geométrico · CD DH (⁰A₁…³A₄) · CI Geométrico · CI Analítico DH — L1=50mm · L2=56mm</div></div>
+  </div>
+  <div class="body" style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;flex:1">
+
+    <!-- Estado articular actual -->
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Estado Articular Actual del Robot</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-family:var(--mono)">
+        <div style="padding:8px;background:rgba(220,38,38,.07);border-radius:6px;text-align:center">
+          <div style="color:#dc2626;font-weight:700;font-size:10px;margin-bottom:2px">q₁ = d₂ — Motor X</div>
+          <div id="htm_q1_val" style="font-size:17px;font-weight:800">—</div>
+          <div style="color:var(--muted2);font-size:9px">mm</div>
+        </div>
+        <div style="padding:8px;background:rgba(5,150,105,.07);border-radius:6px;text-align:center">
+          <div style="color:#059669;font-weight:700;font-size:10px;margin-bottom:2px">q₂ = d₁ — Motor Y</div>
+          <div id="htm_q2_val" style="font-size:17px;font-weight:800">—</div>
+          <div style="color:var(--muted2);font-size:9px">mm</div>
+        </div>
+        <div style="padding:8px;background:rgba(37,99,235,.07);border-radius:6px;text-align:center">
+          <div style="color:#2563eb;font-weight:700;font-size:10px;margin-bottom:2px">q₃ = d₃ — Motor Z</div>
+          <div id="htm_q3_val" style="font-size:17px;font-weight:800">—</div>
+          <div style="color:var(--muted2);font-size:9px">mm</div>
+        </div>
+        <div style="padding:8px;background:rgba(124,58,237,.07);border-radius:6px;text-align:center">
+          <div style="color:var(--purple);font-weight:700;font-size:10px;margin-bottom:2px">θ₄ — Servo real</div>
+          <div id="htm_q4_val" style="font-size:17px;font-weight:800">—</div>
+          <div style="color:var(--muted2);font-size:9px">° (36°=horiz)</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.04);padding:8px;border-radius:6px">
+        <span id="efsuelo_card" style="color:#059669">—</span>
+        &nbsp;|&nbsp; <span style="color:var(--muted2)">Offset suelo:</span>
+        <input type="number" id="zSueloOffsetInp" step="0.5" style="width:70px;padding:2px 6px;border-radius:5px;border:1px solid var(--gb);background:var(--c1);color:var(--text);font-size:11px"/>
+        <button type="button" class="btn btn-secondary btn-xs" onclick="applyZOffsetFromInputs()" style="margin-left:4px">Aplicar</button>
+      </div>
+    </div>
+
+    <!-- CD Geométrico | CD Analítico DH -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:#059669"></div>CD — Método Geométrico &nbsp;<span style="font-size:9px;color:var(--muted2)">T₀E forma cerrada</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;padding:6px;background:rgba(0,0,0,.04);border-radius:5px;line-height:1.7">
+          <span style="color:#dc2626">Pₓ = d₂</span> · <span style="color:#059669">Pᵧ = d₁+L₂(cosθ_r−1)</span><br>
+          <span style="color:#2563eb">Pz = Z_REF−d₃−L₂·sinθ_r</span> · θ_r=(θ₄−36)·90/38
+        </div>
+        <div id="htm_t0e_geom"></div>
+        <div style="margin-top:8px;font-family:var(--mono);font-size:11px;line-height:1.8;background:rgba(5,150,105,.06);padding:8px;border-radius:5px;border:1px solid rgba(5,150,105,.2)">
+          <span style="color:#dc2626">Pₓ = <span id="htm_px_geom">—</span> mm</span><br>
+          <span style="color:#059669">Pᵧ = <span id="htm_py_geom">—</span> mm</span><br>
+          <span style="color:#2563eb">Pz = <span id="htm_pz_geom">—</span> mm</span><br>
+          <span style="color:var(--purple)">θ_real = <span id="htm_tr_geom">—</span>°</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:#7c3aed"></div>CD — Analítico DH &nbsp;<span style="font-size:9px;color:var(--muted2)">⁰A₁·¹A₂·²A₃·³A₄</span></div>
+        <div class="kin-step" style="margin-bottom:5px">
+          <div class="kin-step-title" style="font-size:10px">⁰A₁ — d₁ motor Y (<span id="htm_dh_d1">—</span> mm)</div>
+          <div id="htm_a01"></div>
+        </div>
+        <div class="kin-step" style="margin-bottom:5px">
+          <div class="kin-step-title" style="font-size:10px">¹A₂ — d₂ motor X (<span id="htm_dh_d2">—</span> mm)</div>
+          <div id="htm_a12"></div>
+        </div>
+        <div class="kin-step" style="margin-bottom:5px">
+          <div class="kin-step-title" style="font-size:10px">²A₃ — d₃ motor Z (<span id="htm_dh_d3">—</span> mm) · L₁=50mm</div>
+          <div id="htm_a23"></div>
+        </div>
+        <div class="kin-step" style="margin-bottom:5px">
+          <div class="kin-step-title" style="font-size:10px">³A₄ — θ_real=<span id="htm_dh_tr">—</span>° · L₂=56mm</div>
+          <div id="htm_a34"></div>
+        </div>
+        <div class="kin-step">
+          <div class="kin-step-title" style="font-size:10px">T₀E = ⁰A₁·¹A₂·²A₃·³A₄</div>
+          <div id="htm_t0e_dh"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CI Geométrico | CI Analítico DH -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:#ea580c"></div>CI — Método Geométrico &nbsp;<span style="font-size:9px;color:var(--muted2)">despeje directo de T₀E</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;padding:6px;background:rgba(0,0,0,.04);border-radius:5px;line-height:1.7">
+          Dado T objetivo → despejar d₁, d₂, d₃, θ₄
+        </div>
+        <div id="htm_ik_geom_formulas"></div>
+        <div class="kin-step" style="margin-top:8px">
+          <div class="kin-step-title" style="font-size:10px">T₀E objetivo (= T₀E actual)</div>
+          <div id="htm_ik_geom_mat"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:#0891b2"></div>CI — Analítico DH &nbsp;<span style="font-size:9px;color:var(--muted2)">inversión de ⁰A₁·¹A₂·²A₃·³A₄</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;padding:6px;background:rgba(0,0,0,.04);border-radius:5px;line-height:1.7">
+          De T₀E extraer θ_real, d₂, d₁, d₃ vía D-H inverso
+        </div>
+        <div id="htm_ik_dh_formulas"></div>
+        <div class="kin-step" style="margin-top:8px">
+          <div class="kin-step-title" style="font-size:10px">T₀E objetivo (= T₀E cerrada)</div>
+          <div id="htm_ik_dh_mat"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EF summary -->
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Posición del Efector Final — resumen</div>
+      <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:10px;border-radius:8px">
+        <span style="color:var(--yellow)">p = [<span id="efx">—</span>, <span id="efy">—</span>, <span id="efz">—</span>]ᵀ mm</span><br>
+        <span style="color:#059669">Altura junta→suelo ≈ <span id="efsuelo">—</span> mm</span> &nbsp;<span style="color:var(--muted2)">(Pz + offset)</span> &nbsp;|&nbsp;
+        <span style="color:var(--purple)">θ servo = <span id="efth">—</span>°</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Volumen de Trabajo ── -->
+<div id="panel-volume" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Volumen de Trabajo</div><div class="panel-sub">Nube precalculada por la Raspberry Pi (workspace_export.py) · misma cinemática CD v1.7</div></div>
+    <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+      <button class="btn btn-primary btn-sm" onclick="loadPythonCloud()">↓ Cargar nube</button>
+      <button class="btn btn-sm" onclick="computePythonCloud()" id="btnPyCompute" style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.4);color:var(--purple)">⚙ Recalcular en Pi</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:280px 1fr;flex:1;overflow:hidden">
+
+    <!-- Left sidebar -->
+    <div style="overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+
+      <!-- Status -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--purple)"></div>Estado</div>
+        <div id="pyCloudStatus" style="font-size:11px;color:var(--muted2);font-family:var(--mono);line-height:1.8;min-height:16px">Presiona <b>Cargar nube</b></div>
+        <div id="volStatsBody" style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:6px;line-height:1.8"></div>
+      </div>
+
+      <!-- Matrices usadas -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:#2563eb"></div>Matrices utilizadas para el workspace</div>
+
+        <div style="font-size:10px;font-weight:700;color:#059669;margin:6px 0 3px">CD Geométrico — T₀E</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:rgba(0,0,0,.04);padding:6px;border-radius:5px;line-height:1.6">
+          Pₓ = d₂<br>Pᵧ = d₁+L₂·(cosθ_r−1)<br>Pz = Z_REF−d₃−L₂·sinθ_r<br>
+          <span style="color:var(--text)">T₀E = [Rₓ(θ_real) | p]</span>
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:var(--purple);margin:8px 0 3px">CD Analítico DH — ⁰A₁·¹A₂·²A₃·³A₄</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:rgba(0,0,0,.04);padding:6px;border-radius:5px;line-height:1.6">
+          ⁰A₁(d₁) · ¹A₂(d₂) · ²A₃(d₃,L₁) · ³A₄(θ_r,L₂)<br>
+          <span style="color:var(--text)">T₀E = ⁰A₁·¹A₂·²A₃·³A₄</span>
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:#ea580c;margin:8px 0 3px">CI Geométrico — despeje directo</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:rgba(0,0,0,.04);padding:6px;border-radius:5px;line-height:1.6">
+          d₂ = Pₓ<br>d₁ = Pᵧ−L₂·(cosθ−1)<br>d₃ = Z_REF−Pz−L₂·sinθ
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:#0891b2;margin:8px 0 3px">CI Analítico DH — inversión de T₀E</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:rgba(0,0,0,.04);padding:6px;border-radius:5px;line-height:1.6">
+          θ_r = atan2(T[2][1], T[2][2])<br>d₂ = T[0][3]<br>d₁ = T[1][3]−L₂(cosθ−1)<br>d₃ = Z_REF−T[2][3]−L₂sinθ
+        </div>
+      </div>
+    </div>
+
+    <!-- 3D canvas -->
+    <div style="position:relative;overflow:hidden" id="volCont">
+      <canvas id="volCanvas" style="display:block;width:100%;height:100%"></canvas>
+      <div id="volOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted2);font-size:13px;pointer-events:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="width:52px;height:52px;opacity:.25"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Presiona <strong style="color:var(--text)">Cargar nube</strong> para ver el volumen de trabajo</span>
+        <span style="font-size:11px;color:var(--muted2)">Los datos los calcula la Raspberry Pi con workspace_export.py</span>
+      </div>
+      <div style="position:absolute;bottom:10px;right:12px;font-size:10px;color:var(--muted2);font-family:var(--mono);pointer-events:none">Arrastrar: rotar · Rueda: zoom</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL: Terminal ── -->
+<div id="panel-terminal" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Terminal Serial</div><div class="panel-sub">Comunicación directa con el Arduino</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="clearTerm()" style="margin-left:auto">Limpiar</button>
+  </div>
+  <div style="flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+    <div class="terminal" id="terminal"></div>
+    <div style="display:flex;gap:7px">
+      <input type="text" id="cmdInput" placeholder="HOMEALL, X50, S36…S74 (θ real directo al servo)" onkeydown="if(event.key==='Enter')sendManual()"/>
+      <button class="btn btn-primary btn-sm" onclick="sendManual()">↵ Enviar</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--muted2)">Accesos rápidos:</span>
+      <button class="btn btn-xs btn-secondary" onclick="sendCmd('HOMEALL')">HOMEALL</button>
+      <button class="btn btn-xs btn-secondary" onclick="sendCmd('POS')">POS</button>
+      <button class="btn btn-xs btn-secondary" onclick="sendCmd('ON')">ON</button>
+      <button class="btn btn-xs btn-secondary" onclick="sendCmd('STOP')">STOP</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="panel-test" class="panel">
+  <div class="panel-header">
+    <div><div class="panel-title">Prueba de Motores</div><div class="panel-sub">Mueve cada eje 2 cm sin necesidad de homing ni finales de carrera</div></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;max-width:520px">
+
+    <div class="card" style="border:1px solid #f59e0b44;background:#f59e0b0a">
+      <div style="font-size:12px;color:#f59e0b;font-weight:600;margin-bottom:4px">Aviso</div>
+      <div style="font-size:12px;color:var(--muted2)">Asegúrate de que el eje tiene espacio libre para moverse ~2 cm antes de presionar cada botón. No hay protección de límites.</div>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Eje X</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px">Mueve el eje X 2 cm en la dirección de avance</div>
+      <button class="btn btn-primary btn-full" id="btnTestX" onclick="testMotor('TESTX')">▶ TEST X — 2 cm</button>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Eje Y</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px">Mueve el eje Y 2 cm en la dirección de avance</div>
+      <button class="btn btn-primary btn-full" id="btnTestY" onclick="testMotor('TESTY')">▶ TEST Y — 2 cm</button>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Eje Z</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px">Mueve el eje Z 2 cm en la dirección de avance</div>
+      <button class="btn btn-primary btn-full" id="btnTestZ" onclick="testMotor('TESTZ')">▶ TEST Z — 2 cm</button>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Todos los ejes</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px">Mueve X, Y y Z simultáneamente 2 cm</div>
+      <button class="btn btn-orange btn-full" id="btnTestAll" onclick="testMotor('TESTALL')">▶ TEST ALL — 2 cm</button>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-bar"></div>Respuesta del Arduino</div>
+      <div id="testLog" style="font-family:monospace;font-size:12px;color:var(--muted2);min-height:60px;max-height:160px;overflow-y:auto;white-space:pre-wrap">Esperando...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── PANEL: Dinámica Lagrange-Euler ── -->
+<div id="panel-dynamics" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Dinámica — Lagrange-Euler</div>
+      <div class="panel-sub">τ = D·q̈ + H + C · Motor SymPy verificado · Universidad de Pamplona</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:340px 1fr;flex:1;overflow:hidden">
+
+    <!-- ── COLUMNA IZQUIERDA: Configuración ── -->
+    <div class="le-left">
+
+      <!-- Instrucciones rápidas -->
+      <div class="card" style="border:1px solid rgba(37,99,235,.25);background:rgba(37,99,235,.04)">
+        <div style="font-size:11px;color:var(--muted2);line-height:1.75">
+          <span style="color:var(--blue);font-weight:700">Rotacional:</span> θ = q_1, q_2…<br>
+          <span style="color:var(--cyan);font-weight:700">Prismática:</span> d = d_1, d_2…<br>
+          <span style="color:var(--muted2)">Constantes: pi, pi/2, L_1, g, 5.6, 0</span><br>
+          <span style="color:var(--muted2)">Masas: m_1, m_2 | Gravedad: -g, -9.8</span>
+        </div>
+      </div>
+
+      <!-- GDL -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar"></div>Grados de Libertad</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="le_gdl" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--gb);background:rgba(255,255,255,.85);font-size:12px;font-weight:600;color:var(--text)" onchange="leSetGDL()">
+            <option value="1">1 GDL</option>
+            <option value="2" selected>2 GDL</option>
+            <option value="3">3 GDL</option>
+            <option value="4">4 GDL</option>
+            <option value="5">5 GDL</option>
+            <option value="6">6 GDL</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="leSetGDL()">↺</button>
+        </div>
+      </div>
+
+      <!-- Tabla DH -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--cyan)"></div>Tabla Denavit-Hartenberg</div>
+        <div style="overflow-x:auto">
+          <table class="le-dh-table">
+            <thead>
+              <tr>
+                <th>i</th>
+                <th>θᵢ</th>
+                <th>dᵢ</th>
+                <th>aᵢ</th>
+                <th>αᵢ</th>
+              </tr>
+            </thead>
+            <tbody id="le_dh_body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Centroides y Masas -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--orange)"></div>Centroides y Masas</div>
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:8px">Centro de masa referido al sistema {Sᵢ} de cada eslabón</div>
+        <div id="le_links_body"></div>
+      </div>
+
+      <!-- Gravedad -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--green)"></div>Vector de Gravedad — Sistema Base {S₀}</div>
+        <div class="le-link-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div><label class="le-lbl">gₓ</label><input type="text" id="le_gx" class="le-link-inp" value="0"/></div>
+          <div><label class="le-lbl">gᵧ</label><input type="text" id="le_gy" class="le-link-inp" value="0"/></div>
+          <div><label class="le-lbl">g_z</label><input type="text" id="le_gz" class="le-link-inp" value="-g"/></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:5px">Z↑ robot vertical: gz=-9.8 · Y↓: gy=-9.8 · Simbólico: -g</div>
+      </div>
+
+      <!-- Botones -->
+      <button id="le_calc_btn" class="btn btn-primary btn-full" onclick="calcLagrangeEuler()" style="padding:11px;font-size:13px;font-weight:700;letter-spacing:.3px">
+        ⚙&nbsp; Calcular Modelo Dinámico
+      </button>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="leLoadExample()" style="margin-top:-4px">
+        Cargar ejemplo del profesor — 2 GDL (R+P)
+      </button>
+
+    </div>
+
+    <!-- ── COLUMNA DERECHA: Resultados ── -->
+    <div id="le_results" style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;flex:1;color:var(--muted2)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="width:52px;height:52px;opacity:.25"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <div style="font-size:14px;font-weight:700;opacity:.5">Sin resultados</div>
+        <div style="font-size:11px;text-align:center;opacity:.4;max-width:280px;line-height:1.7">Configure los parámetros y presione<br><strong>Calcular Modelo Dinámico</strong><br>o cargue el ejemplo del profesor</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let connected=false,motorOn=false;
+let homed={x:false,y:false,z:false};
+let pos={x:0,y:0,z:0,servo:36};
+let steps={X:5,Y:5,Z:5};
+let sseSource=null;
+let ikResult={x:0,y:0,z:0,servo:36,reachable:false};
+let fkResult={x:0,y:0,z:0,servo:36};
+let dkMethod='geom', ikMethod='geom';
+const LIM={x:265,y:190,z:120};
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='home') setTimeout(resizeRenderer,50);
+  if(id==='htm') updateHTM();
+  if(id==='volume') setTimeout(initVolRenderer,50);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TERMINAL
+// ══════════════════════════════════════════════════════════════
+function log(msg,cls='rx'){
+  const el=document.getElementById('terminal');
+  const d=document.createElement('div');
+  d.className='tl '+cls;
+  const ts=new Date().toLocaleTimeString('es',{hour12:false});
+  d.innerHTML=`<span class="tts">${ts}</span><span class="tmsg">${msg}</span>`;
+  el.appendChild(d);
+  el.scrollTop=el.scrollHeight;
+  while(el.children.length>600)el.removeChild(el.firstChild);
+}
+function clearTerm(){document.getElementById('terminal').innerHTML=''}
+
+// ══════════════════════════════════════════════════════════════
+// SERIAL
+// ══════════════════════════════════════════════════════════════
+async function refreshPorts(){
+  try{
+    const r=await fetch('/api/manipulator/ports');
+    const d=await r.json();
+    const sel=document.getElementById('portSelect');
+    const prev=sel.value;
+    sel.innerHTML='<option value="">Puerto…</option>';
+    (d.ports||[]).forEach(p=>{
+      const o=document.createElement('option');
+      o.value=p.path;
+      o.textContent=p.path+(p.manufacturer?'  —  '+p.manufacturer:'');
+      sel.appendChild(o);
+    });
+    if(prev)sel.value=prev;
+    log(`${d.ports?.length||0} puerto(s) encontrado(s)`,'sys');
+  }catch(e){log('Error puertos: '+e.message,'err')}
+}
+
+async function connectSerial(){
+  const port=document.getElementById('portSelect').value;
+  const baud=document.getElementById('baudSelect').value;
+  if(!port){log('Selecciona un puerto','err');return}
+  log(`Conectando ${port} @ ${baud}…`,'sys');
+  try{
+    const r=await fetch('/api/manipulator/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port,baudRate:Number(baud)})});
+    const d=await r.json();
+    if(d.ok){log(d.message,'ok');startSSE()}else log('Error: '+d.message,'err');
+  }catch(e){log('Error: '+e.message,'err')}
+}
+
+async function disconnectSerial(){
+  try{
+    await fetch('/api/manipulator/disconnect',{method:'POST'});
+    log('Desconectado','sys');
+    if(sseSource){sseSource.close();sseSource=null}
+  }catch(e){log('Error: '+e.message,'err')}
+}
+
+function startSSE(){
+  if(sseSource)sseSource.close();
+  sseSource=new EventSource('/api/manipulator/events');
+  sseSource.onmessage=e=>{try{handleMsg(JSON.parse(e.data))}catch{}};
+  sseSource.onerror=()=>{log('Stream desconectado','sys');setConn(false)};
+}
+
+function handleMsg(m){
+  if(m.type==='log'){log(m.data,clf(m.data))}
+  if(m.type==='position'){updatePos(m.data);updateHTM()}
+  if(m.type==='status'){
+    setConn(m.data.connected);
+    if(m.data.position){updatePos(m.data.position);updateHTM()}
+    if(m.data.homed)updateHomed(m.data.homed);
+    motorOn=m.data.motorOn||false;updateMotor();
+  }
+  if(m.type==='error')log('ERROR: '+m.data,'err');
+}
+
+function clf(l){
+  if(!l)return'rx';l=l.toLowerCase();
+  if(l.includes('error')||l.includes('! '))return'err';
+  if(l.includes('ok')||l.includes('completo')||l.includes('origen'))return'ok';
+  if(l.includes('homing')||l.includes('buscando')||l.includes('separando'))return'sys';
+  return'rx';
+}
+
+async function sendCmd(cmd){
+  if(!connected){log('No conectado','err');return}
+  log('▶ '+cmd,'tx');
+  try{await fetch('/api/manipulator/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})})}
+  catch(e){log('Error: '+e.message,'err')}
+}
+
+async function testMotor(cmd){
+  const logEl=document.getElementById('testLog');
+  if(!connected){logEl.textContent='Error: No conectado al Arduino';return}
+  logEl.textContent='Enviando '+cmd+'...';
+  try{
+    await fetch('/api/manipulator/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})});
+    logEl.textContent='Comando '+cmd+' enviado. Revisa la respuesta del Arduino abajo.';
+    log('▶ '+cmd,'tx');
+  }catch(e){logEl.textContent='Error: '+e.message}
+}
+
+function sendManual(){
+  const i=document.getElementById('cmdInput');
+  if(!i.value.trim())return;
+  sendCmd(i.value.trim());i.value='';
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI STATE
+// ══════════════════════════════════════════════════════════════
+function setConn(val){
+  connected=val;
+  const b=document.getElementById('connBadge');
+  b.className=val?'connected':'disconnected';
+  document.getElementById('connText').textContent=val?'Conectado':'Desconectado';
+  document.getElementById('btnConn').disabled=val;
+  document.getElementById('btnDisc').disabled=!val;
+  const ids=['btnOn','btnStop','btnHomeAll','bHX','bHY','bHZ','btnPos',
+    'jXn','jXp','jYn','jYp','jZn','jZp','sSlider','bSend','bS0','bS55','bS110',
+    'bgX','bgY','bgZ','bFKSend',
+    'bHA2','bHX2','bHY2','bHZ2','bP2','bO2','bST2'];
+  ids.forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=!val});
+  updateIKSendState();
+}
+
+function updatePos(p){
+  pos={...pos,...p};
+  ['x','y','z'].forEach(ax=>{
+    const v=pos[ax],lim=LIM[ax];
+    const el=document.getElementById('v'+ax.toUpperCase());
+    if(el)el.textContent=v.toFixed(1);
+    const bar=document.getElementById('b'+ax.toUpperCase());
+    if(bar)bar.style.width=Math.min(100,(v/lim*100)).toFixed(1)+'%';
+  });
+  const sv=pos.servo;
+  if(document.getElementById('vS'))document.getElementById('vS').textContent=sv;
+  if(document.getElementById('bS'))document.getElementById('bS').style.width=(sv/SERVO_MAX*100).toFixed(1)+'%';
+  if(document.getElementById('sSlider'))document.getElementById('sSlider').value=sv;
+  if(document.getElementById('sDsp'))document.getElementById('sDsp').textContent=sv;
+  if(document.getElementById('sInp'))document.getElementById('sInp').value=sv;
+  // overlay
+  document.getElementById('olX').textContent='X='+pos.x.toFixed(1)+'mm';
+  document.getElementById('olY').textContent='Y='+pos.y.toFixed(1)+'mm';
+  document.getElementById('olZ').textContent='Z='+pos.z.toFixed(1)+'mm';
+  document.getElementById('olS').textContent='θ='+pos.servo+'°';
+  // 3D
+  updateRobotPose(pos.x,pos.y,pos.z,pos.servo);
+  updateVolRobotPose(pos.x,pos.y,pos.z,pos.servo);
+}
+
+function updateHomed(h){
+  homed={...h};
+  ['x','y','z'].forEach(ax=>{
+    const c=document.getElementById('p'+ax.toUpperCase());
+    if(c){c.classList.toggle('homed',!!homed[ax]);c.classList.toggle('unhomed',!homed[ax])}
+  });
+}
+
+function updateMotor(){
+  const led=document.getElementById('mled'),lbl=document.getElementById('mlbl');
+  led.className='mled '+(motorOn?'on':'off');
+  lbl.textContent=motorOn?'Motores habilitados':'Motores deshabilitados';
+  lbl.style.color=motorOn?'var(--green)':'var(--red)';
+}
+
+// ══════════════════════════════════════════════════════════════
+// JOG & SERVO
+// ══════════════════════════════════════════════════════════════
+function sStep(ax,val){
+  steps[ax]=val;
+  document.getElementById('lbl'+ax).textContent='paso: '+val+' mm';
+  document.getElementById('st'+ax).querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('active',Number(b.textContent)===val));
+}
+function jog(ax,dir){const mm=steps[ax]*dir;sendCmd(`${ax}${mm>=0?'+':''}${mm}`)}
+function onSSlide(v){document.getElementById('sDsp').textContent=v;document.getElementById('sInp').value=v}
+function sendServo(v){sendCmd('S'+v)}
+function setServo(v){document.getElementById('sSlider').value=v;onSSlide(v);sendServo(v)}
+function sendServoInput(){
+  const v=parseInt(document.getElementById('sInp').value);
+  if(isNaN(v)||v<SERVO_MIN||v>SERVO_MAX){log(`Servo inválido (${SERVO_MIN}–${SERVO_MAX})`,'err');return}
+  setServo(v);
+}
+function gotoAx(ax,inputId,lim){
+  const v=parseFloat(document.getElementById(inputId).value);
+  if(isNaN(v)){log(ax+': valor inválido','err');return}
+  const cl=Math.max(0,Math.min(lim,v));
+  const delta=cl-pos[ax.toLowerCase()];
+  if(Math.abs(delta)<0.01){log(ax+': ya en esa posición','sys');return}
+  sendCmd(`${ax}${delta>=0?'+':''}${delta.toFixed(1)}`);
+}
+function useCurrPos(prefix){
+  document.getElementById(prefix+'_x').value=pos.x.toFixed(1);
+  document.getElementById(prefix+'_y').value=pos.y.toFixed(1);
+  document.getElementById(prefix+'_z').value=pos.z.toFixed(1);
+  document.getElementById(prefix+'_s').value=pos.servo;
+  computeFK();
+}
+function useCurrentPoseForIK(){
+  const fk=fkClosed(pos.x,pos.y,pos.z,pos.servo);
+  document.getElementById('ik_px').value=fk.px.toFixed(1);
+  document.getElementById('ik_py').value=fk.py.toFixed(1);
+  document.getElementById('ik_pz').value=fk.pz.toFixed(1);
+  document.getElementById('ik_th').value=pos.servo;
+  computeIK();
+}
+function setKinMethod(panel,method){
+  if(panel==='direct'){
+    dkMethod=method;
+    document.getElementById('mt-geom').classList.toggle('active',method==='geom');
+    document.getElementById('mt-dh').classList.toggle('active',method==='dh');
+    computeFK();
+  }else{
+    ikMethod=method;
+    document.getElementById('ik-mt-geom').classList.toggle('active',method==='geom');
+    document.getElementById('ik-mt-anal').classList.toggle('active',method==='anal');
+    computeIK();
+  }
+}
+async function sendFKToRobot(){
+  const x=parseFloat(document.getElementById('dk_x').value)||0;
+  const y=parseFloat(document.getElementById('dk_y').value)||0;
+  const z=parseFloat(document.getElementById('dk_z').value)||0;
+  const s=parseFloat(document.getElementById('dk_s').value)||0;
+  const dx=x-pos.x,dy=y-pos.y,dz=z-pos.z;
+  if(Math.abs(dx)>0.01)await sendCmd('X'+(dx>=0?'+':'')+dx.toFixed(1));
+  if(Math.abs(dy)>0.01)await sendCmd('Y'+(dy>=0?'+':'')+dy.toFixed(1));
+  if(Math.abs(dz)>0.01)await sendCmd('Z'+(dz>=0?'+':'')+dz.toFixed(1));
+  if(Math.abs(s-pos.servo)>0.5)await sendCmd('S'+Math.round(s));
+}
+async function sendIKToRobot(){
+  if(ikResult.reachable===false){
+    log('IK fuera de rango: ajusta Pₓ, Pᵧ, Pz o θ₄ antes de enviar.','err');
+    return;
+  }
+  const {x,y,z,servo}=ikResult;
+  const dx=x-pos.x,dy=y-pos.y,dz=z-pos.z;
+  if(Math.abs(dx)>0.01)await sendCmd('X'+(dx>=0?'+':'')+dx.toFixed(1));
+  if(Math.abs(dy)>0.01)await sendCmd('Y'+(dy>=0?'+':'')+dy.toFixed(1));
+  if(Math.abs(dz)>0.01)await sendCmd('Z'+(dz>=0?'+':'')+dz.toFixed(1));
+  if(Math.abs(servo-pos.servo)>0.5)await sendCmd('S'+Math.round(servo));
+}
+function updateIKSendState(){
+  const btn=document.getElementById('bIKSend');
+  if(!btn)return;
+  const reachable=ikResult.reachable!==false;
+  btn.disabled=!connected||!reachable;
+  btn.title=!connected
+    ? 'Conecta el robot para enviar la solución IK.'
+    : reachable
+      ? 'Enviar solución IK exacta al robot.'
+      : 'La posición objetivo queda fuera del rango físico del robot.';
+}
+
+// ══════════════════════════════════════════════════════════════
+// KINEMATICS
+// ══════════════════════════════════════════════════════════════
+const L1=50;          // mm — solo geometría/visualización de la escena
+const L2=56;          // mm — distancia del centro del servo a la punta del efector
+const Z_REF=295;      // mm — referencia fija del eje Z en la CD compensada
+const SERVO_MIN=0;
+const SERVO_MAX=74;
+const SERVO_HOME=36;  // 36° = brazo horizontal
+const SERVO_REAL_SCALE=90/(74-36); // 38° mecánicos → 90° reales
+const SERVO_SPAN=SERVO_MAX-SERVO_MIN;
+// CD v1.7:
+//   Px = d2
+//   Py = d1 + L2·cos(theta_real) - L2
+//   Pz = Z_REF - d3 - L2·sin(theta_real)
+//   theta_real = (theta4 - 36) * 90/38
+// La MTH da Pz en el marco cinemático elegido; si quieres altura al piso, suma un offset calibrado.
+const LS_KEY_Z_SUELO='moule3d_z_suelo_offset_mm';
+function getZOffsetSuelo(){
+  try{const v=localStorage.getItem(LS_KEY_Z_SUELO);if(v==null||v==='')return 50;const n=parseFloat(v);return Number.isFinite(n)?n:50}catch(_){return 50}
+}
+function setZOffsetSuelo(mm){localStorage.setItem(LS_KEY_Z_SUELO,String(mm))}
+function pzDhToAlturaSuelo(pzDh){return pzDh+getZOffsetSuelo()}
+function alturaSueloToPzDh(zSuelo){return zSuelo-getZOffsetSuelo()}
+const BASE_HEIGHT=230; // mm — altura del eje Y sobre el suelo
+const X_OFFSET_Y=50;   // mm — eje X por encima del eje Y
+const Z_OFFSET_Y=10;   // mm — eje Z por encima del eje Y
+const X_MIN_OFF=50;    // mm — distancia mínima del carro X al poste Y (clearance)
+const Z_FRONT=20;      // mm — offset frontal del carro Z respecto al riel X
+// HTML/UI y Arduino usan el mismo θ4 real: 36° horizontal, 74° ≈ abajo.
+
+function rad(d){return d*Math.PI/180}
+function deg(r){return r*180/Math.PI}
+function clampServo(v){return Math.max(SERVO_MIN,Math.min(SERVO_MAX,v))}
+function thetaRealDeg(theta4){return (theta4-SERVO_HOME)*SERVO_REAL_SCALE}
+function thetaRealRad(theta4){return rad(thetaRealDeg(theta4))}
+
+function fkClosed(q1,q2,q3,theta4){
+  const tReal=thetaRealRad(theta4), c=Math.cos(tReal), s=Math.sin(tReal);
+  const px=q1;
+  const pyBase=q2;
+  const pzBase=Z_REF-q3;
+  const dPyArm=L2*(c-1);
+  const dPzArm=-L2*s;
+  return {
+    thetaRealDeg:deg(tReal),
+    thetaRealRad:tReal,
+    c, s,
+    px,
+    py:pyBase+dPyArm,
+    pz:pzBase+dPzArm,
+    pyBase, pzBase, dPyArm, dPzArm,
+  };
+}
+
+function matMul(A,B){
+  const R=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++)for(let k=0;k<4;k++)R[i][j]+=A[i][k]*B[k][j];
+  return R;
+}
+
+// MTH individuales (DH verificado por el profesor)
+// d1=motor Y (altura), d2=motor X, d3=motor Z (baja)
+function T01(d1){return[[1,0,0,0],[0,1,0,0],[0,0,1,d1],[0,0,0,1]]}  // traslación d1 en Z
+function T12(d2){return[[1,0,0,d2],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]]} // traslación d2 en X + inversión YZ
+function T23(d3){return[[1,0,0,0],[0,1,0,d3],[0,0,1,0],[0,0,0,1]]}   // traslación d3 en Y
+// T34: ilustrativo — traslación L1 en Z local + Rₓ(θ₄); el producto T₀₁…T₄E ≠ T₀E cerrada
+function T34(servo){const t=thetaRealRad(servo),c=Math.cos(t),s=Math.sin(t);return[[1,0,0,0],[0,c,s,-L2],[0,-s,c,0],[0,0,0,1]]}
+function T4E(){return[[1,0,0,0],[0,1,0,L2],[0,0,1,0],[0,0,0,1]]}
+// T₀E FORMA CERRADA v1.7:
+// | 1     0        0       d2                          |
+// | 0  cos(tr)  -sin(tr)   d1 + L2·(cos(tr)-1)        |
+// | 0  sin(tr)   cos(tr)   Z_REF - d3 - L2·sin(tr)    |
+// | 0     0        0       1                           |
+function T0E(q1,q2,q3,servo){
+  const fk=fkClosed(q1,q2,q3,servo);
+  return[[1,0,0,fk.px],[0,fk.c,-fk.s,fk.py],[0,fk.s,fk.c,fk.pz],[0,0,0,1]];
+}
+// Alias para compatibilidad interna
+function T04(x,y,z,th){return T0E(x,y,z,th)}
+
+// Matrices Denavit-Hartenberg individuales ⁰A₁…³A₄
+// d1=motorY(q2), d2=motorX(q1), d3=motorZ(q3), θ₄=servo→θ_real
+function A01(d1){return[[0,0,-1,0],[1,0,0,0],[0,-1,0,d1],[0,0,0,1]]}
+function A12(d2){return[[0,0,1,0],[-1,0,0,0],[0,1,0,d2],[0,0,0,1]]}
+function A23(d3){return[[0,0,-1,0],[1,0,0,L1],[0,-1,0,d3],[0,0,0,1]]}
+function A34(servo){
+  const tr=thetaRealRad(servo),c=Math.cos(tr),s=Math.sin(tr);
+  return[[c,-s,0,L2*c],[s,c,0,L2*s],[0,0,1,0],[0,0,0,1]];
+}
+
+function fmtN(v){
+  const r=parseFloat(v.toFixed(4));
+  if(Math.abs(r)<1e-10)return'0';
+  return r.toString();
+}
+
+function renderMat(mat,highlight){
+  const rows=mat.map((row,i)=>{
+    const cells=row.map((v,j)=>{
+      const f=fmtN(v);
+      let cls='mat-cell';
+      if(Math.abs(v)<1e-10)cls+=' zero';
+      else if(Math.abs(v-1)<1e-10)cls+=' one';
+      else if(i<3&&j<3&&Math.abs(v)<=1)cls+=v>0?' cos':' sin';
+      else if(j===3&&i<3)cls+=' pos';
+      return`<div class="${cls}">${f}</div>`;
+    }).join('');
+    return`<div class="mat-row">${cells}</div>`;
+  }).join('');
+  return`<div class="mat-wrap"><div class="mat-bracket">[<br><br><br>]</div><div class="mat-inner">${rows}</div><div class="mat-bracket">]<br><br><br>[</div></div>`;
+}
+
+function computeFK(){
+  const q1=parseFloat(document.getElementById('dk_x').value)||0;
+  const q2=parseFloat(document.getElementById('dk_y').value)||0;
+  const q3=parseFloat(document.getElementById('dk_z').value)||0;
+  const q4=clampServo(parseFloat(document.getElementById('dk_s').value)||SERVO_HOME);
+  document.getElementById('dk_s').value=q4;
+  const mat=T0E(q1,q2,q3,q4);
+  const fk=fkClosed(q1,q2,q3,q4);
+  const px=fk.px;
+  const py=fk.py;
+  const pz=fk.pz;
+  const pxD2=q1, dPxArm=0;
+  const pyBase=fk.pyBase, dPyArm=fk.dPyArm;
+  const pzBase=fk.pzBase, dPzArm=fk.dPzArm;
+  fkResult={x:q1,y:q2,z:q3,servo:q4};
+
+  const FK_UI_VER='v1.7';
+  const fkBanner=`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;border-left:4px solid #22c55e;background:linear-gradient(90deg,rgba(34,197,94,.14),transparent);font-size:12px;line-height:1.65">
+    <div style="font-weight:800;font-size:13px;margin-bottom:6px">Cinemática directa — <span style="color:#22c55e">panel FK_UI ${FK_UI_VER}</span></div>
+    <div><b>CD v1.7:</b> <b>Pₓ = d₂</b>. <b>Pᵧ = d₁ + 56·[cos(θ_real) − 1]</b>. <b>Pz = 295 − d₃ − 56·sin(θ_real)</b>. <b>θ_real = (θ₄ − 36)·2.368</b>.</div>
+    <div style="margin-top:8px;padding:8px;border-radius:8px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.25)"><b>Z compensada:</b> <b>${pz.toFixed(1)} mm</b> con referencia fija de <b>${Z_REF} mm</b>.</div>
+  </div>`;
+
+  let html='';
+  if(dkMethod==='geom'){
+    html=fkBanner+`
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Método Geométrico — Deducción</div>
+        <div class="kin-step"><div class="kin-step-title">Modelo: PPP + R (DH verificado)</div>
+          <div class="kin-formula">• q₁ = motor X (d₂), q₂ = motor Y (d₁), q₃ = motor Z (d₃)<br>
+• L2 = ${L2} mm: brazo del servo a la punta del efector<br>
+• θ₄ = ángulo real del servo en grados [0,74]<br>
+• θ_real = (θ₄ − ${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)} para compensar que el servo no llega a 90°</div></div>
+        <div class="kin-step"><div class="kin-step-title">Pₓ — Solo motor X (d₂ = q₁)</div>
+          <div class="kin-formula">El recorrido del motor X es la coordenada Pₓ del efector. El brazo L2 <b>no</b> se proyecta sobre X.</div>
+          <div class="kin-formula">Pₓ = d₂ = q₁ = ${q1.toFixed(2)} mm</div>
+          <div class="kin-result">Pₓ = ${px.toFixed(4)} mm</div></div>
+        <div class="kin-step"><div class="kin-step-title">Pᵧ — d₁ + 56·[cos(θ_real) − 1]</div>
+          <div class="kin-formula">θ₄ = ${q4.toFixed(1)}° → θ_real = (${q4.toFixed(1)} − ${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)} = ${fk.thetaRealDeg.toFixed(3)}°</div>
+          <div class="kin-formula">Pᵧ = d₁ + 56·[cos(θ_real) − 1] = ${q2.toFixed(2)} + ${L2}·[cos(${fk.thetaRealDeg.toFixed(3)}°) − 1]</div>
+          <div class="kin-result">Pᵧ = ${py.toFixed(4)} mm</div></div>
+        <div class="kin-step"><div class="kin-step-title">Pz — 295 − d₃ − 56·sin(θ_real)</div>
+          <div class="kin-formula">Pz = ${Z_REF} − q₃ − L₂·sin(θ_real)</div>
+          <div class="kin-formula">Pz = ${Z_REF} − ${q3.toFixed(2)} − ${L2}·sin(${fk.thetaRealDeg.toFixed(3)}°)</div>
+          <div class="kin-result">Pz = ${pz.toFixed(4)} mm</div></div>
+        <div class="kin-step"><div class="kin-step-title">θ₄ — Articulación rotacional (servo)</div>
+          <div class="kin-formula">θ₄ = ${q4.toFixed(4)}° real del servo</div>
+          <div class="kin-result">Se compensa a θ_real = ${fk.thetaRealDeg.toFixed(4)}° antes de entrar a cos/sen.</div></div>
+        <div class="kin-step"><div class="kin-step-title">MTH cerrada</div>
+          <div class="kin-formula">La MTH operativa usa <b>Rₓ(θ_real)</b> en la submatriz 3×3 y deja la compensación del efector en la columna de traslación.</div></div>
+        <div class="kin-step"><div class="kin-step-title">Descomposición</div>
+          <div class="kin-formula"><b>Pₓ = q₁</b>. &nbsp; <b>Pᵧ = q₂ + L₂·(cos θ_real − 1)</b>. &nbsp; <b>Pz = ${Z_REF} − q₃ − L₂·sin θ_real</b>.</div>
+          <div class="kin-formula" style="margin-top:8px;font-family:var(--mono);font-size:11px;line-height:1.85">
+Pₓ = <b>${px.toFixed(4)}</b> mm<br>
+Pᵧ = ${pyBase.toFixed(2)} + ${dPyArm.toFixed(4)} = <b>${py.toFixed(4)}</b> mm<br>
+Pz = ${pzBase.toFixed(2)} + (${dPzArm.toFixed(4)}) = <b>${pz.toFixed(4)}</b> mm
+          </div></div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>RESULTADO — Punta del efector (DH) + desglose carro / brazo</div>
+        <div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);font-size:12px;line-height:1.9">
+          <div style="font-weight:800;margin-bottom:8px;color:var(--text)">Desglose (aquí se ve qué hace el servo)</div>
+          <div><span style="color:#dc2626;font-weight:700">Pₓ</span> = <b>solo q₁ (motor X)</b> = <b>${px.toFixed(4)} mm</b> &nbsp;<span style="color:var(--muted2)">(L₂ no entra en X)</span></div>
+          <div><span style="color:#059669;font-weight:700">Pᵧ</span> = <b>q₂</b> ${pyBase.toFixed(2)} + <b>56·(cos θ_real − 1)</b> ${dPyArm.toFixed(4)} → <b>${py.toFixed(4)} mm</b></div>
+          <div><span style="color:#2563eb;font-weight:700">Pz</span> = <b>${Z_REF}−q₃</b> ${pzBase.toFixed(2)} <b>− 56·sin θ_real</b> (${dPzArm.toFixed(4)}) → <b>${pz.toFixed(4)} mm</b></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px">
+          <div style="font-weight:700;margin-bottom:6px;color:var(--muted2)">Fórmulas compactas</div>
+          <span style="color:#dc2626">Pₓ = d₂ = q₁ = ${px.toFixed(4)} mm</span><br>
+          <span style="color:#059669">Pᵧ = d₁ + 56·[cos(θ_real) − 1] = ${py.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">Pz = ${Z_REF} − d₃ − 56·sin(θ_real) = ${pz.toFixed(4)} mm</span><br>
+          <span style="color:var(--purple)">θ₄ = ${q4.toFixed(4)}° → θ_real = ${fk.thetaRealDeg.toFixed(4)}°</span>
+        </div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>MTH Total T₀E = [Rₓ(θ_real) | p]</div>${renderMat(mat)}</div>`;
+  }else{
+    const ma01=A01(q2),ma12=A12(q1),ma23=A23(q3),ma34=A34(q4);
+    const tr=fk.thetaRealRad,c=fk.c,s=fk.s;
+    html=fkBanner+`
+      <div class="card"><div class="ct"><div class="ct-bar"></div>RESULTADO — Punta del efector (DH)</div>
+        <div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);font-size:12px;line-height:1.9">
+          <div><span style="color:#dc2626;font-weight:700">Pₓ</span> = d₂ = q₁ = <b>${px.toFixed(4)} mm</b></div>
+          <div><span style="color:#059669;font-weight:700">Pᵧ</span> = d₁ + L₂·(cos θ_real − 1) = <b>${py.toFixed(4)} mm</b></div>
+          <div><span style="color:#2563eb;font-weight:700">Pz</span> = ${Z_REF} − d₃ − L₂·sin θ_real = <b>${pz.toFixed(4)} mm</b></div>
+          <div style="margin-top:4px;color:var(--muted2)">θ₄ = ${q4.toFixed(4)}° &nbsp;→&nbsp; θ_real = ${fk.thetaRealDeg.toFixed(4)}°</div>
+        </div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Matrices de Denavit-Hartenberg &nbsp; ⁰A₁ · ¹A₂ · ²A₃ · ³A₄</div>
+        <div class="kin-step">
+          <div class="kin-step-title">⁰A₁ — junta prismática d₁ (motor Y = ${q2.toFixed(1)} mm)</div>
+          ${renderMat(ma01)}
+        </div>
+        <div class="kin-step">
+          <div class="kin-step-title">¹A₂ — junta prismática d₂ (motor X = ${q1.toFixed(1)} mm)</div>
+          ${renderMat(ma12)}
+        </div>
+        <div class="kin-step">
+          <div class="kin-step-title">²A₃ — junta prismática d₃ (motor Z = ${q3.toFixed(1)} mm) + L₁ = ${L1} mm</div>
+          ${renderMat(ma23)}
+        </div>
+        <div class="kin-step">
+          <div class="kin-step-title">³A₄ — junta rotacional θ_real = ${fk.thetaRealDeg.toFixed(4)}° + eslabón L₂ = ${L2} mm</div>
+          ${renderMat(ma34)}
+        </div>
+        <div class="kin-step" style="margin-top:8px">
+          <div class="kin-step-title">T₀E — producto ⁰A₁·¹A₂·²A₃·³A₄ (forma cerrada)</div>
+          ${renderMat(mat)}
+        </div>
+        <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px;margin-top:8px">
+          <span style="color:#dc2626">Pₓ = d₂ = ${px.toFixed(4)} mm</span><br>
+          <span style="color:#059669">Pᵧ = d₁ + ${L2}·[cos(θ_real) − 1] = ${py.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">Pz = ${Z_REF} − d₃ − ${L2}·sin(θ_real) = ${pz.toFixed(4)} mm</span>
+        </div>
+      </div>`;
+  }
+  document.getElementById('fk-result').innerHTML=html;
+}
+
+function computeIK(){
+  const px=parseFloat(document.getElementById('ik_px').value)||0;
+  const py=parseFloat(document.getElementById('ik_py').value)||0;
+  const pz=parseFloat(document.getElementById('ik_pz').value)||0;
+  const th=clampServo(parseFloat(document.getElementById('ik_th').value)||SERVO_HOME);
+  document.getElementById('ik_th').value=th;
+  const _a=thetaRealRad(th);
+  const q1_raw=px;
+  const q2_raw=py-L2*(Math.cos(_a)-1);
+  const q3_raw=Z_REF-pz-L2*Math.sin(_a);
+  const q4_raw=th;
+  const q1=Math.max(0,Math.min(LIM.x,q1_raw));
+  const q2=Math.max(0,Math.min(LIM.y,q2_raw));
+  const q3=Math.max(0,Math.min(LIM.z,q3_raw));
+  const q4=clampServo(q4_raw);
+  const clamped=q1!==q1_raw||q2!==q2_raw||q3!==q3_raw||q4!==q4_raw;
+  const fkReal=fkClosed(q1,q2,q3,q4);
+  const px_real=fkReal.px;
+  const py_real=fkReal.py;
+  const pz_real=fkReal.pz;
+  const errX=px_real-px;
+  const errY=py_real-py;
+  const errZ=pz_real-pz;
+  const reachable=!clamped&&Math.abs(errX)<1e-6&&Math.abs(errY)<1e-6&&Math.abs(errZ)<1e-6;
+  ikResult={
+    x:q1,y:q2,z:q3,servo:q4,reachable,
+    raw:{x:q1_raw,y:q2_raw,z:q3_raw,servo:q4_raw},
+    target:{px,py,pz,servo:th},
+    achieved:{px:px_real,py:py_real,pz:pz_real}
+  };
+  updateIKSendState();
+  const targetMat=[[1,0,0,px],[0,Math.cos(_a),-Math.sin(_a),py],[0,Math.sin(_a),Math.cos(_a),pz],[0,0,0,1]];
+  const thetaRealTxt=thetaRealDeg(th).toFixed(3);
+  const statusBanner=reachable
+    ? `<div style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:10px 12px;font-size:11px;color:#15803d;margin-bottom:10px"><b>Objetivo alcanzable.</b> La IK devuelve una solución exacta dentro de los límites físicos y se puede enviar directo al robot.</div>`
+    : `<div style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--yellow);margin-bottom:10px"><b>Objetivo fuera de rango.</b> Se muestra la solución saturada más cercana, pero el botón de envío queda bloqueado para no mover el robot a una pose distinta a la pedida.</div>`;
+
+  let html='';
+  if(ikMethod==='geom'){
+    html=`
+      ${statusBanner}
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Método Geométrico — Deducción</div>
+        <div class="kin-step"><div class="kin-step-title">Modelo operativo — T₀₄ con Rₓ(θ_r)</div>
+          <div class="kin-formula">T₀₄ = [1 0 0 Pₓ; 0 cos(θ_r) -sin(θ_r) Pᵧ; 0 sin(θ_r) cos(θ_r) Pz; 0 0 0 1]</div>
+          <div class="kin-formula" style="margin-top:8px">Con tu compensación:<br>
+Pₓ = d₂<br>
+Pᵧ = d₁ + 56·[cos(θ_real) − 1]<br>
+Pz = ${Z_REF} − d₃ − 56·sin(θ_real)<br>
+θ_real = (θ₄ − ${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)}</div></div>
+        <div class="kin-step"><div class="kin-step-title">Despeje de la IK</div>
+          <div class="kin-formula">d₂ = Pₓ = ${px.toFixed(2)} mm</div>
+          <div class="kin-formula">d₁ = Pᵧ − 56·[cos(θ_real) − 1] = ${py.toFixed(2)} − ${L2}·[cos(${thetaRealTxt}°) − 1]</div>
+          <div class="kin-formula">d₃ = ${Z_REF} − Pz − 56·sin(θ_real) = ${Z_REF} − ${pz.toFixed(2)} − ${L2}·sin(${thetaRealTxt}°)</div>
+          <div class="kin-formula">θ₄ = ${q4.toFixed(2)}° &nbsp;→&nbsp; θ_real = ${thetaRealTxt}°</div></div>
+        <div class="kin-step"><div class="kin-step-title">Valores articulares obtenidos</div>
+          <div class="kin-result">d₂ / eje X = ${q1.toFixed(4)} mm</div>
+          <div class="kin-result">d₁ / eje Y = ${q2.toFixed(4)} mm</div>
+          <div class="kin-result">d₃ / eje Z = ${q3.toFixed(4)} mm</div>
+          <div class="kin-result">θ₄ / servo = ${q4.toFixed(4)}°</div></div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Comandos a enviar al robot</div>
+        <div style="font-family:var(--mono);font-size:13px;line-height:2.2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px">
+          <span style="color:#dc2626">X = d₂ = ${q1.toFixed(4)} mm</span><br>
+          <span style="color:#059669">Y = d₁ = ${q2.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">Z = d₃ = ${q3.toFixed(4)} mm</span><br>
+          <span style="color:var(--purple)">S = θ₄ = ${q4.toFixed(4)}°</span>
+        </div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Verificación — T₀₄ objetivo vs T₀₄ alcanzado</div>
+        <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px;margin-bottom:10px">
+          <span style="color:#dc2626">ΔPₓ = ${errX.toFixed(4)} mm</span><br>
+          <span style="color:#059669">ΔPᵧ = ${errY.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">ΔPz = ${errZ.toFixed(4)} mm</span>
+        </div>
+        <div class="kin-step"><div class="kin-step-title">T₀₄ objetivo</div>${renderMat(targetMat)}</div>
+        <div class="kin-step"><div class="kin-step-title">T₀₄ con la solución IK</div>${renderMat(T0E(q1,q2,q3,q4))}</div>
+      </div>`;
+  }else{
+    html=`
+      ${statusBanner}
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Método Analítico — Inversión de T₀₄</div>
+        <div class="kin-step"><div class="kin-step-title">Inversión exacta de tu modelo cerrado</div>
+          <div class="kin-formula">T₀₄ = [1 0 0 d₂; 0 cos(θ_real) -sin(θ_real) d₁ + 56·(cos θ_real − 1); 0 sin(θ_real) cos(θ_real) ${Z_REF} − d₃ − 56·sin θ_real; 0 0 0 1]</div>
+          <div class="kin-formula" style="margin-top:8px">Entonces:<br>
+d₂ = Pₓ<br>
+d₁ = Pᵧ − 56·[cos(θ_real) − 1]<br>
+d₃ = ${Z_REF} − Pz − 56·sin(θ_real)<br>
+θ_real = (θ₄−${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)}</div></div>
+        <div class="kin-step"><div class="kin-step-title">Valores calculados (antes del clamp)</div>
+          <div class="kin-formula">d₂ = <span style="color:var(--yellow)">${q1_raw.toFixed(4)}</span>
+d₁ = <span style="color:var(--yellow)">${q2_raw.toFixed(4)}</span>
+d₃ = <span style="color:var(--yellow)">${q3_raw.toFixed(4)}</span>
+θ₄ = ${th.toFixed(4)}°</div></div>
+        <div class="kin-step"><div class="kin-step-title">Aplicando límites físicos</div>
+          <div class="kin-formula">d₂ / X ∈ [0, 265] mm → <span style="color:var(--green)">${q1.toFixed(4)} mm</span>
+d₁ / Y ∈ [0, 190] mm → <span style="color:var(--green)">${q2.toFixed(4)} mm</span>
+d₃ / Z ∈ [0, 120] mm → <span style="color:var(--green)">${q3.toFixed(4)} mm</span>
+θ₄ / servo ∈ [${SERVO_MIN}, ${SERVO_MAX}]° → <span style="color:var(--green)">${q4.toFixed(4)}°</span></div></div>
+      </div>
+      <div class="card"><div class="ct"><div class="ct-bar"></div>Verificación — T₀₄ objetivo vs T₀₄ alcanzado</div>
+        <div class="kin-step"><div class="kin-step-title">T₀₄ objetivo</div>${renderMat(targetMat)}</div>
+        <div class="kin-step"><div class="kin-step-title">T₀₄ con la solución IK</div>${renderMat(T0E(q1,q2,q3,q4))}</div>
+        <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px;margin-top:10px">
+          <span style="color:#dc2626">ΔPₓ = ${errX.toFixed(4)} mm</span><br>
+          <span style="color:#059669">ΔPᵧ = ${errY.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">ΔPz = ${errZ.toFixed(4)} mm</span>
+        </div>
+      </div>`;
+  }
+  document.getElementById('ik-result').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MTH PANEL
+// ══════════════════════════════════════════════════════════════
+function applyZOffsetFromInputs(){
+  const inp=document.getElementById('zSueloOffsetInp');
+  if(!inp)return;
+  const n=parseFloat(inp.value);
+  setZOffsetSuelo(Number.isFinite(n)?n:50);
+  if(inp)inp.value=String(getZOffsetSuelo());
+  computeFK();
+  updateHTM();
+}
+
+function updateHTM(){
+  if(!document.getElementById('panel-htm').classList.contains('active'))return;
+  const {x,y,z,servo}=pos;
+  // q1=motorX=x(d2), q2=motorY=y(d1), q3=motorZ=z(d3)
+  const tr=thetaRealRad(servo), c=Math.cos(tr), s=Math.sin(tr);
+  const trDeg=thetaRealDeg(servo);
+
+  // ── Estado articular ──
+  document.getElementById('htm_q1_val').textContent=x.toFixed(2);
+  document.getElementById('htm_q2_val').textContent=y.toFixed(2);
+  document.getElementById('htm_q3_val').textContent=z.toFixed(2);
+  document.getElementById('htm_q4_val').textContent=servo.toFixed(1);
+
+  // ── CD Geométrico ──
+  const t0e=T0E(x,y,z,servo);
+  document.getElementById('htm_t0e_geom').innerHTML=renderMat(t0e);
+  const fk=fkClosed(x,y,z,servo);
+  document.getElementById('htm_px_geom').textContent=fk.px.toFixed(4);
+  document.getElementById('htm_py_geom').textContent=fk.py.toFixed(4);
+  document.getElementById('htm_pz_geom').textContent=fk.pz.toFixed(4);
+  document.getElementById('htm_tr_geom').textContent=trDeg.toFixed(4);
+
+  // ── CD Analítico DH ──
+  document.getElementById('htm_dh_d1').textContent=y.toFixed(2);
+  document.getElementById('htm_dh_d2').textContent=x.toFixed(2);
+  document.getElementById('htm_dh_d3').textContent=z.toFixed(2);
+  document.getElementById('htm_dh_tr').textContent=trDeg.toFixed(3);
+  document.getElementById('htm_a01').innerHTML=renderMat(A01(y));
+  document.getElementById('htm_a12').innerHTML=renderMat(A12(x));
+  document.getElementById('htm_a23').innerHTML=renderMat(A23(z));
+  document.getElementById('htm_a34').innerHTML=renderMat(A34(servo));
+  document.getElementById('htm_t0e_dh').innerHTML=renderMat(t0e);
+
+  // ── CI — valores articulares desde la pose actual del efector ──
+  const px=fk.px, py=fk.py, pz=fk.pz;
+  const d2ik=px;
+  const d1ik=py-L2*(c-1);
+  const d3ik=Z_REF-pz-L2*s;
+  const tTarget=[[1,0,0,px],[0,c,-s,py],[0,s,c,pz],[0,0,0,1]];
+
+  // CI Geométrico
+  document.getElementById('htm_ik_geom_formulas').innerHTML=`
+    <div style="font-family:var(--mono);font-size:11px;line-height:1.9;background:rgba(234,88,12,.06);padding:8px;border-radius:6px;border:1px solid rgba(234,88,12,.2)">
+      <b>Objetivo:</b> Pₓ=${px.toFixed(3)}, Pᵧ=${py.toFixed(3)}, Pz=${pz.toFixed(3)}<br>
+      <span style="color:#dc2626">d₂ = Pₓ = ${d2ik.toFixed(4)} mm</span><br>
+      <span style="color:#059669">d₁ = Pᵧ−L₂·[cosθ_r−1] = ${d1ik.toFixed(4)} mm</span><br>
+      <span style="color:#2563eb">d₃ = ${Z_REF}−Pz−L₂·sinθ_r = ${d3ik.toFixed(4)} mm</span><br>
+      <span style="color:var(--purple)">θ₄ = ${servo.toFixed(4)}° → θ_real = ${trDeg.toFixed(4)}°</span>
+    </div>`;
+  document.getElementById('htm_ik_geom_mat').innerHTML=renderMat(tTarget);
+
+  // CI Analítico DH
+  const trDegDH=Math.atan2(s,c)*180/Math.PI;
+  document.getElementById('htm_ik_dh_formulas').innerHTML=`
+    <div style="font-family:var(--mono);font-size:11px;line-height:1.9;background:rgba(8,145,178,.06);padding:8px;border-radius:6px;border:1px solid rgba(8,145,178,.2)">
+      <b>De T₀E extraer:</b><br>
+      <span style="color:var(--purple)">θ_r = atan2(T[2][1], T[2][2]) = ${trDegDH.toFixed(4)}°</span><br>
+      <span style="color:#dc2626">d₂ = T[0][3] = ${d2ik.toFixed(4)} mm</span><br>
+      <span style="color:#059669">d₁ = T[1][3]−L₂·(cosθ−1) = ${d1ik.toFixed(4)} mm</span><br>
+      <span style="color:#2563eb">d₃ = ${Z_REF}−T[2][3]−L₂·sinθ = ${d3ik.toFixed(4)} mm</span>
+    </div>`;
+  document.getElementById('htm_ik_dh_mat').innerHTML=renderMat(tTarget);
+
+  // ── Posición EF ──
+  document.getElementById('efx').textContent=px.toFixed(3);
+  document.getElementById('efy').textContent=py.toFixed(3);
+  document.getElementById('efz').textContent=pz.toFixed(3);
+  const pzDh=t0e[2][3];
+  const alturaStr=pzDhToAlturaSuelo(pzDh).toFixed(1);
+  const es=document.getElementById('efsuelo');
+  if(es)es.textContent=alturaStr;
+  const esc=document.getElementById('efsuelo_card');
+  if(esc)esc.textContent=`Pₓ=${px.toFixed(1)} Pᵧ=${py.toFixed(1)} Pz=${pz.toFixed(1)} mm · Altura≈${alturaStr}mm`;
+  document.getElementById('efth').textContent=servo.toFixed(3);
+  const zInp=document.getElementById('zSueloOffsetInp');
+  if(zInp&&document.activeElement!==zInp)zInp.value=String(getZOffsetSuelo());
+}
+
+// ══════════════════════════════════════════════════════════════
+// THREE.JS 3D SCENE
+// ══════════════════════════════════════════════════════════════
+let renderer,camera,scene,animId;
+let robotGroups={};
+let wireMode=false;
+
+// Materials
+const alumM=()=>new THREE.MeshStandardMaterial({color:0xB2B6BA,metalness:.92,roughness:.15});
+const darkM=()=>new THREE.MeshStandardMaterial({color:0x1a1c22,metalness:.5,roughness:.65});
+const redM =()=>new THREE.MeshStandardMaterial({color:0xCC1111,metalness:.3,roughness:.5});
+const baseM=()=>new THREE.MeshStandardMaterial({color:0x7a7e84,metalness:.8,roughness:.2});
+const pcbM =()=>new THREE.MeshStandardMaterial({color:0x1a5c1a,metalness:.1,roughness:.8});
+
+function box(w,h,d,mat,px,py,pz){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(px,py,pz);m.castShadow=true;m.receiveShadow=true;return m;
+}
+function cyl(rt,rb,h,seg,mat,px,py,pz){
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat);
+  m.position.set(px,py,pz);m.castShadow=true;m.receiveShadow=true;return m;
+}
+
+function initThreeJS(){
+  const canvas=document.getElementById('canvas3d');
+  const container=canvas.parentElement;
+  const W=container.clientWidth,H=container.clientHeight;
+
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
+  renderer.setClearColor(0xe8ebf0);
+
+  camera=new THREE.PerspectiveCamera(45,W/H,1,8000);
+  cameraTheta=Math.PI/4;cameraPhi=Math.PI/3.2;cameraRadius=700;
+
+  scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0xe8ebf0,.0002);
+
+  const amb=new THREE.AmbientLight(0xffffff,1.6);scene.add(amb);
+  const dir=new THREE.DirectionalLight(0xffffff,1.4);
+  dir.position.set(500,800,400);dir.castShadow=true;
+  dir.shadow.mapSize.set(2048,2048);
+  scene.add(dir);
+  const dir2=new THREE.DirectionalLight(0x8899cc,0.5);dir2.position.set(-300,300,-400);scene.add(dir2);
+  const dir3=new THREE.DirectionalLight(0xffeedd,0.4);dir3.position.set(0,-400,0);scene.add(dir3);
+
+  loadSTL();
+  setupOrbit(canvas);
+  animate();
+}
+
+function loadSTL(){
+  const loader=new THREE.STLLoader();
+  loader.load('/manipulador.STL',geometry=>{
+    geometry.computeVertexNormals();
+    const mat=new THREE.MeshStandardMaterial({
+      color:0x8fa8c8,metalness:.45,roughness:.55,
+    });
+    const mesh=new THREE.Mesh(geometry,mat);
+    mesh.castShadow=true;mesh.receiveShadow=true;
+    // Center mesh at bounding box center
+    geometry.computeBoundingBox();
+    const bb=geometry.boundingBox;
+    const cx=(bb.max.x+bb.min.x)/2;
+    const cy=(bb.max.y+bb.min.y)/2;
+    const cz=(bb.max.z+bb.min.z)/2;
+    mesh.position.set(-cx,-cy,-cz);
+    scene.add(mesh);
+    // Fit camera to model size
+    const size=Math.max(bb.max.x-bb.min.x,bb.max.y-bb.min.y,bb.max.z-bb.min.z);
+    cameraRadius=size*2.2;
+    camTarget.set(0,0,0);
+    updateCamera();
+  },undefined,err=>{
+    console.warn('No se pudo cargar manipulador.STL:',err);
+  });
+  camTarget.set(0,0,0);
+  updateCamera();
+}
+
+function updateRobotPose(x,y,z,servo){
+  // El STL es un modelo estático — sin animación de pose
+}
+
+// ── Orbit camera ──
+let isDrag=false,prevMouse={x:0,y:0};
+let cameraTheta=Math.PI/4,cameraPhi=Math.PI/3.2,cameraRadius=700;
+const camTarget=new THREE.Vector3(90,60,-130);
+
+function updateCamera(){
+  if(!camera)return;
+  camera.position.set(
+    camTarget.x+cameraRadius*Math.sin(cameraPhi)*Math.sin(cameraTheta),
+    camTarget.y+cameraRadius*Math.cos(cameraPhi),
+    camTarget.z+cameraRadius*Math.sin(cameraPhi)*Math.cos(cameraTheta)
+  );
+  camera.lookAt(camTarget);
+}
+
+function setupOrbit(canvas){
+  canvas.addEventListener('mousedown',e=>{isDrag=true;prevMouse={x:e.clientX,y:e.clientY}});
+  canvas.addEventListener('mouseup',()=>isDrag=false);
+  canvas.addEventListener('mouseleave',()=>isDrag=false);
+  canvas.addEventListener('mousemove',e=>{
+    if(!isDrag)return;
+    cameraTheta+=(e.clientX-prevMouse.x)*.008;
+    cameraPhi=Math.max(.1,Math.min(Math.PI-.1,cameraPhi+(e.clientY-prevMouse.y)*.008));
+    prevMouse={x:e.clientX,y:e.clientY};updateCamera();
+  });
+  canvas.addEventListener('wheel',e=>{
+    cameraRadius=Math.max(150,Math.min(1500,cameraRadius+e.deltaY*.5));updateCamera();
+  },{passive:true});
+  // Touch
+  let touches=[];
+  canvas.addEventListener('touchstart',e=>{touches=[...e.touches];isDrag=true});
+  canvas.addEventListener('touchend',()=>{isDrag=false;touches=[]});
+  canvas.addEventListener('touchmove',e=>{
+    if(touches.length===1&&e.touches.length===1){
+      cameraTheta+=(e.touches[0].clientX-touches[0].clientX)*.008;
+      cameraPhi=Math.max(.1,Math.min(Math.PI-.1,cameraPhi+(e.touches[0].clientY-touches[0].clientY)*.008));
+      touches=[...e.touches];updateCamera();
+    }
+  });
+}
+
+function resetCamera(){cameraTheta=Math.PI/4;cameraPhi=Math.PI/3.2;cameraRadius=700;updateCamera()}
+
+function toggleWire(){
+  wireMode=!wireMode;
+  scene.traverse(o=>{if(o.isMesh&&o.material)o.material.wireframe=wireMode});
+}
+
+function resizeRenderer(){
+  if(!renderer)return;
+  const c=document.getElementById('canvas3d');
+  const container=c.parentElement;
+  const W=container.clientWidth,H=container.clientHeight;
+  if(W<=0||H<=0)return;
+  renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();
+}
+
+function animate(){
+  animId=requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',async()=>{
+  initThreeJS();
+  window.addEventListener('resize',resizeRenderer);
+  await refreshPorts();
+  try{
+    const r=await fetch('/api/manipulator/status');
+    const d=await r.json();
+    if(d.connected){
+      setConn(true);
+      if(d.position)updatePos(d.position);
+      if(d.homed)updateHomed(d.homed);
+      motorOn=d.motorOn||false;updateMotor();
+      startSSE();log('Reconectado','sys');
+    }
+  }catch{}
+  const z0=document.getElementById('zSueloOffsetInp');
+  if(z0){z0.value=String(getZOffsetSuelo());z0.addEventListener('change',applyZOffsetFromInputs)}
+  // Initial FK/IK render
+  computeFK();computeIK();updateHTM();
+});
+
+// ══════════════════════════════════════════════════════════════
+// VOLUMEN DE TRABAJO — solo nube Python / Pi
+// ══════════════════════════════════════════════════════════════
+let volRend=null,volCam=null,volScn=null,volAnimId2=null;
+let volRobotGroups={};
+
+function jetColor(t){
+  const r=Math.min(Math.max(1.5-Math.abs(4*t-3),0),1);
+  const g=Math.min(Math.max(1.5-Math.abs(4*t-2),0),1);
+  const b=Math.min(Math.max(1.5-Math.abs(4*t-1),0),1);
+  return[r,g,b];
+}
+
+function buildVolRobot(){
+  if(volRobotGroups.root){volScn.remove(volRobotGroups.root);}
+  const root=new THREE.Group();
+  // Base plate
+  root.add(box(24,20,24,baseM(),0,10,0));
+  // Y-rail (horizontal along Three.js X = motorY direction)
+  root.add(box(D1_MAX+80,8,10,alumM(),Z_FRONT+D1_MAX/2,Z_REF+6,0));
+  // yCar: moves along Three.js X = motorY+Z_FRONT, fixed at world Y=Z_REF
+  const yCar=new THREE.Group();
+  yCar.add(box(22,16,26,darkM(),0,0,0));
+  yCar.add(box(8,Z_REF,8,alumM(),0,-Z_REF/2,14)); // Z-column
+  // zCar: moves along Three.js Y = -motorZ (in yCar space)
+  const zCar=new THREE.Group();
+  zCar.add(box(12,16,22,darkM(),0,0,14));
+  zCar.add(box(8,8,D2_MAX+80,alumM(),0,-4,X_MIN_OFF+D2_MAX/2)); // X-arm along Three.js Z
+  // xCar: moves along Three.js Z = motorX+X_MIN_OFF (in zCar space)
+  const xCar=new THREE.Group();
+  xCar.add(box(14,16,20,darkM(),0,0,0));
+  // arm: rotates around Three.js Z axis, extends in +Three.js X
+  const arm=new THREE.Group();
+  arm.add(cyl(7,7,10,12,pcbM(),0,0,0));
+  arm.add(box(L2,8,8,redM(),L2/2,0,0));
+  xCar.add(arm);
+  zCar.add(xCar);
+  yCar.add(zCar);
+  root.add(yCar);
+  volScn.add(root);
+  volRobotGroups={root,yCar,zCar,xCar,arm};
+  updateVolRobotPose(pos.x,pos.y,pos.z,pos.servo);
+}
+
+function updateVolRobotPose(x,y,z,servo){
+  if(!volRobotGroups.yCar)return;
+  const tr=thetaRealRad(servo);
+  // yCar world X = motorY+Z_FRONT, world Y = Z_REF (top of Z-column)
+  volRobotGroups.yCar.position.set(y+Z_FRONT,Z_REF,0);
+  // zCar in yCar space: Y = -motorZ  →  world Y = Z_REF-motorZ
+  volRobotGroups.zCar.position.set(0,-z,0);
+  // xCar in zCar space: Z = motorX+X_MIN_OFF
+  volRobotGroups.xCar.position.set(0,0,x+X_MIN_OFF);
+  // arm rotates in Three.js X-Y plane (around Z axis)
+  // tip world = (motorY+Z_FRONT+L2*cos(tr), Z_REF-motorZ-L2*sin(tr), motorX+X_MIN_OFF)
+  volRobotGroups.arm.rotation.z=-tr;
+}
+
+function initVolRenderer(){
+  const canvas=document.getElementById('volCanvas');
+  if(!canvas)return;
+  const cont=document.getElementById('volCont');
+  const W=cont.clientWidth,H=cont.clientHeight;
+  if(W<=0||H<=0)return;
+  if(volRend){
+    volRend.setSize(W,H);
+    if(volCam){volCam.aspect=W/H;volCam.updateProjectionMatrix();}
+    return;
+  }
+  volRend=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+  volRend.setSize(W,H);volRend.setPixelRatio(Math.min(devicePixelRatio,2));
+  volRend.setClearColor(0xf0f2f5);
+
+  volCam=new THREE.PerspectiveCamera(50,W/H,1,5000);
+
+  volScn=new THREE.Scene();
+  volScn.add(new THREE.AmbientLight(0xffffff,1.0));
+  const dLight=new THREE.DirectionalLight(0xffffff,0.8);
+  dLight.position.set(300,500,400);volScn.add(dLight);
+  volScn.add(new THREE.AxesHelper(100));
+
+  buildVolRobot();
+
+  // Orbit
+  let vDrag=false,vPrev={x:0,y:0};
+  let vTheta=Math.PI/4,vPhi=Math.PI/3.5,vRadius=800;
+  const vTarget=new THREE.Vector3(133,200,182);
+  function vUpdateCam(){
+    volCam.position.set(
+      vTarget.x+vRadius*Math.sin(vPhi)*Math.sin(vTheta),
+      vTarget.y+vRadius*Math.cos(vPhi),
+      vTarget.z+vRadius*Math.sin(vPhi)*Math.cos(vTheta)
+    );
+    volCam.lookAt(vTarget);
+  }
+  vUpdateCam();
+  canvas.addEventListener('mousedown',e=>{vDrag=true;vPrev={x:e.clientX,y:e.clientY}});
+  canvas.addEventListener('mouseup',()=>vDrag=false);
+  canvas.addEventListener('mouseleave',()=>vDrag=false);
+  canvas.addEventListener('mousemove',e=>{
+    if(!vDrag)return;
+    vTheta+=(e.clientX-vPrev.x)*.008;
+    vPhi=Math.max(.1,Math.min(Math.PI-.1,vPhi+(e.clientY-vPrev.y)*.008));
+    vPrev={x:e.clientX,y:e.clientY};vUpdateCam();
+  });
+  canvas.addEventListener('wheel',e=>{
+    vRadius=Math.max(200,Math.min(3000,vRadius+e.deltaY*.6));vUpdateCam();
+  },{passive:true});
+
+  (function volLoop(){volAnimId2=requestAnimationFrame(volLoop);volRend.render(volScn,volCam)})();
+}
+
+function renderVolPtsCloud(pts){
+  if(!volScn||!pts.length)return;
+  const old=volScn.getObjectByName('volPts');
+  if(old){volScn.remove(old);old.geometry.dispose();old.material.dispose();}
+  const n=pts.length;
+  let pzMin=Infinity,pzMax=-Infinity;
+  for(let i=0;i<n;i++){const z=pts[i][2];if(z<pzMin)pzMin=z;if(z>pzMax)pzMax=z;}
+  if(pzMin===pzMax){pzMax=pzMin+1;}
+  const pos2=new Float32Array(n*3);
+  const col=new Float32Array(n*3);
+  const zSpan=pzMax-pzMin;
+  for(let i=0;i<n;i++){
+    const p=pts[i];
+    const q1=p[3],q2=p[4],t4=p[6]; // motorX, motorY, servo
+    const tr=thetaRealRad(t4);
+    pos2[i*3  ]=q2+Z_FRONT+L2*Math.cos(tr); // Three.js X
+    pos2[i*3+1]=p[2];                         // fk.pz → Three.js Y
+    pos2[i*3+2]=q1+X_MIN_OFF;                 // Three.js Z
+    const [r,g,b]=jetColor((p[2]-pzMin)/zSpan);
+    col[i*3]=r;col[i*3+1]=g;col[i*3+2]=b;
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos2,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const mat=new THREE.PointsMaterial({size:3,vertexColors:true,sizeAttenuation:false});
+  const mesh=new THREE.Points(geo,mat);mesh.name='volPts';
+  volScn.add(mesh);
+  document.getElementById('volOverlay').style.display='none';
+  const stats=document.getElementById('volStatsBody');
+  if(stats)stats.innerHTML=
+    `<span style="color:#059669">Pz: [${pzMin.toFixed(1)}, ${pzMax.toFixed(1)}] mm</span><br>`+
+    `Puntos: <strong style="color:var(--text)">${n.toLocaleString()}</strong>`;
+}
+
+async function loadPythonCloud(){
+  const status=document.getElementById('pyCloudStatus');
+  status.style.color='var(--muted2)';status.textContent='Cargando…';
+  try{
+    const r=await fetch('/api/manipulator/workspace-cloud');
+    if(!r.ok){const e=await r.json();status.style.color='var(--red)';status.textContent=e.message||'Error';return;}
+    const data=await r.json();
+    const n=data.d1.length;
+    // d1=motorY, d2=motorX — fkClosed(q1=motorX, q2=motorY)
+    const pts=[];
+    for(let i=0;i<n;i++){
+      const pyD1=data.d1[i],pyD2=data.d2[i],pyD3=data.d3[i],t4=data.t4[i];
+      const fk=fkClosed(pyD2,pyD1,pyD3,t4);
+      pts.push([fk.px,fk.py,fk.pz,pyD2,pyD1,pyD3,t4]);
+    }
+    initVolRenderer();
+    renderVolPtsCloud(pts);
+    status.style.color='var(--green)';
+    const total=data.meta?.n_total;
+    status.textContent=`✓ ${n.toLocaleString()} pts`+(total?` (ref. ${total.toLocaleString()})`:'');
+  }catch(e){status.style.color='var(--red)';status.textContent='Error: '+e.message;}
+}
+
+async function computePythonCloud(){
+  const status=document.getElementById('pyCloudStatus');
+  const btn=document.getElementById('btnPyCompute');
+  status.style.color='var(--muted2)';status.textContent='Calculando en Pi… (~30s)';
+  btn.disabled=true;
+  try{
+    const r=await fetch('/api/manipulator/workspace-compute',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({max_pts:60000})
+    });
+    const data=await r.json();
+    if(data.ok){status.style.color='var(--green)';status.textContent='✓ '+data.message;await loadPythonCloud();}
+    else{status.style.color='var(--red)';status.textContent='✗ '+data.message;}
+  }catch(e){status.style.color='var(--red)';status.textContent='Error: '+e.message;}
+  btn.disabled=false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// DINÁMICA LAGRANGE-EULER
+// ══════════════════════════════════════════════════════════════
+
+function leSetGDL(){
+  const gdl=parseInt(document.getElementById('le_gdl').value)||2;
+  buildLEDHTable(gdl);
+  buildLELinkInputs(gdl);
+}
+
+function buildLEDHTable(gdl){
+  let rows='';
+  const defaults={
+    theta:['q_1','q_2','q_3','q_4','q_5','q_6'],
+    d:['0','0','0','0','0','0'],
+    a:['0','0','0','0','0','0'],
+    alpha:['0','0','0','0','0','0']
+  };
+  for(let i=1;i<=gdl;i++){
+    rows+=`<tr>
+      <td class="le-row-lbl">${i}</td>
+      <td><input type="text" id="le_th${i}" placeholder="q_${i}" value="${defaults.theta[i-1]}"/></td>
+      <td><input type="text" id="le_d${i}"  placeholder="0"    value="${defaults.d[i-1]}"/></td>
+      <td><input type="text" id="le_a${i}"  placeholder="0"    value="${defaults.a[i-1]}"/></td>
+      <td><input type="text" id="le_al${i}" placeholder="0"    value="${defaults.alpha[i-1]}"/></td>
+    </tr>`;
+  }
+  document.getElementById('le_dh_body').innerHTML=rows;
+}
+
+function buildLELinkInputs(gdl){
+  let html='';
+  for(let i=1;i<=gdl;i++){
+    html+=`<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--gb)">
+      <div style="font-size:10px;font-weight:700;color:var(--muted2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">
+        Eslabón ${i}
+      </div>
+      <div class="le-link-grid">
+        <div><label class="le-lbl">X centro</label><input type="text" id="le_cx${i}" class="le-link-inp" value="0"/></div>
+        <div><label class="le-lbl">Y centro</label><input type="text" id="le_cy${i}" class="le-link-inp" value="0"/></div>
+        <div><label class="le-lbl">Z centro</label><input type="text" id="le_cz${i}" class="le-link-inp" value="0"/></div>
+        <div><label class="le-lbl">Masa m_${i}</label><input type="text" id="le_m${i}"  class="le-link-inp" value="m_${i}"/></div>
+      </div>
+    </div>`;
+  }
+  // Quitar borde del último
+  document.getElementById('le_links_body').innerHTML=html;
+}
+
+function leLoadExample(){
+  // Ejemplo del profesor: 2 GDL Rotacional + Prismático
+  document.getElementById('le_gdl').value='2';
+  leSetGDL();
+  // DH
+  document.getElementById('le_th1').value='q_1';
+  document.getElementById('le_d1').value='0';
+  document.getElementById('le_a1').value='0';
+  document.getElementById('le_al1').value='-pi/2';
+  document.getElementById('le_th2').value='0';
+  document.getElementById('le_d2').value='d_2';
+  document.getElementById('le_a2').value='0';
+  document.getElementById('le_al2').value='0';
+  // Centroides
+  document.getElementById('le_cx1').value='0';
+  document.getElementById('le_cy1').value='0';
+  document.getElementById('le_cz1').value='L_1';
+  document.getElementById('le_m1').value='m_1';
+  document.getElementById('le_cx2').value='0';
+  document.getElementById('le_cy2').value='0';
+  document.getElementById('le_cz2').value='0';
+  document.getElementById('le_m2').value='m_2';
+  // Gravedad
+  document.getElementById('le_gx').value='0';
+  document.getElementById('le_gy').value='0';
+  document.getElementById('le_gz').value='-g';
+}
+
+async function calcLagrangeEuler(){
+  const gdl=parseInt(document.getElementById('le_gdl').value)||2;
+
+  const dh_params=[];
+  for(let i=1;i<=gdl;i++){
+    dh_params.push({
+      theta:(document.getElementById('le_th'+i)||{value:'q_'+i}).value||'q_'+i,
+      d:    (document.getElementById('le_d'+i) ||{value:'0'}).value||'0',
+      a:    (document.getElementById('le_a'+i) ||{value:'0'}).value||'0',
+      alpha:(document.getElementById('le_al'+i)||{value:'0'}).value||'0'
+    });
+  }
+  const centroids=[];
+  const masses=[];
+  for(let i=1;i<=gdl;i++){
+    centroids.push({
+      x:(document.getElementById('le_cx'+i)||{value:'0'}).value||'0',
+      y:(document.getElementById('le_cy'+i)||{value:'0'}).value||'0',
+      z:(document.getElementById('le_cz'+i)||{value:'0'}).value||'0'
+    });
+    masses.push((document.getElementById('le_m'+i)||{value:'m_'+i}).value||'m_'+i);
+  }
+  const gravity={
+    gx:(document.getElementById('le_gx')||{value:'0'}).value||'0',
+    gy:(document.getElementById('le_gy')||{value:'0'}).value||'0',
+    gz:(document.getElementById('le_gz')||{value:'-g'}).value||'-g'
+  };
+
+  const resEl=document.getElementById('le_results');
+  resEl.innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;flex:1;padding:40px">
+      <div style="font-size:28px;animation:spin 1.5s linear infinite;display:inline-block">⚙</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">Calculando modelo dinámico…</div>
+      <div style="font-size:11px;color:var(--muted2);text-align:center;max-width:300px;line-height:1.7">
+        SymPy resuelve O(n⁴) operaciones simbólicas.<br>
+        Para ${gdl} GDL esto puede tomar de segundos a minutos.
+      </div>
+    </div>`;
+
+  const btn=document.getElementById('le_calc_btn');
+  if(btn){btn.disabled=true;btn.textContent='Calculando…';}
+
+  try{
+    const r=await fetch('/api/manipulator/lagrange-euler',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({gdl,dh_params,centroids,masses,gravity})
+    });
+    const data=await r.json();
+
+    if(!data.ok){
+      resEl.innerHTML=`<div style="padding:20px">
+        <div class="card" style="border:1px solid rgba(220,38,38,.35);background:rgba(220,38,38,.05)">
+          <div style="color:var(--red);font-weight:700;font-size:13px;margin-bottom:8px">Error en el cálculo</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted2);white-space:pre-wrap;word-break:break-all">${data.message||'Error desconocido'}</div>
+        </div></div>`;
+    } else {
+      renderLEResults(data);
+    }
+  }catch(e){
+    resEl.innerHTML=`<div style="padding:20px">
+      <div class="card" style="border:1px solid rgba(220,38,38,.35)">
+        <div style="color:var(--red);font-weight:700">Error de conexión</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:4px">${e.message}</div>
+      </div></div>`;
+  }
+
+  if(btn){btn.disabled=false;btn.textContent='⚙  Calcular Modelo Dinámico';}
+}
+
+function renderLEResults(data){
+  const {gdl,D,H,C,tau,q_dot,q_ddot,var_articulares,time}=data;
+
+  // ── Matriz D ──
+  let dRows='';
+  for(let i=0;i<gdl;i++){
+    dRows+='<tr>';
+    for(let j=0;j<gdl;j++){
+      const val=D[i][j];
+      const cls=val==='0'?'sym-zero':(i===j?'sym-diag':'');
+      const display=val.length>40?val.slice(0,38)+'…':val;
+      dRows+=`<td class="${cls}" title="${val}">${display}</td>`;
+    }
+    dRows+='</tr>';
+  }
+  const dHtml=`<div class="sym-mat-scroll"><table class="sym-mat">${dRows}</table></div>`;
+
+  // ── Vector H ──
+  let hHtml='';
+  for(let i=0;i<gdl;i++){
+    const v=H[i],isZero=v==='0';
+    hHtml+=`<div class="sym-vec-item">
+      <span class="sym-vec-lbl">h${i+1}</span>
+      <span class="sym-vec-val${isZero?' sym-zero':''}">${v}</span>
+    </div>`;
+  }
+
+  // ── Vector C ──
+  let cHtml='';
+  for(let i=0;i<gdl;i++){
+    const v=C[i],isZero=v==='0';
+    cHtml+=`<div class="sym-vec-item">
+      <span class="sym-vec-lbl">c${i+1}</span>
+      <span class="sym-vec-val${isZero?' sym-zero':''}">${v}</span>
+    </div>`;
+  }
+
+  // ── Ecuaciones τ ──
+  let tauHtml='';
+  for(let i=0;i<gdl;i++){
+    const v=var_articulares[i];
+    const tipo=v.startsWith('q')?`τ${i+1} — torque`:`F${i+1} — fuerza`;
+    tauHtml+=`<div class="kin-step">
+      <div class="kin-step-title">${tipo} &nbsp;<span style="font-family:var(--mono);color:var(--blue)">${v}</span></div>
+      <div class="le-eq-block">${tau[i]}</div>
+    </div>`;
+  }
+
+  document.getElementById('le_results').innerHTML=`
+
+    <!-- Resumen -->
+    <div class="card" style="border:1px solid rgba(37,99,235,.25);background:rgba(37,99,235,.04)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-weight:800;color:var(--blue);font-size:14px;font-family:var(--mono)">τ = D·q̈ + H + C</div>
+        <div style="display:flex;gap:10px;font-size:10px;color:var(--muted2)">
+          <span style="background:rgba(37,99,235,.12);border-radius:6px;padding:3px 8px;font-weight:600">⏱ ${time}s</span>
+          <span style="background:rgba(5,150,105,.12);border-radius:6px;padding:3px 8px;font-weight:600">${gdl} GDL</span>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--muted2);line-height:1.9">
+        <span style="color:var(--text);font-weight:600">q:</span> ${var_articulares.join(' , ')}
+        &nbsp;|&nbsp;
+        <span style="color:var(--text);font-weight:600">q̇:</span> ${q_dot.join(' , ')}
+        &nbsp;|&nbsp;
+        <span style="color:var(--text);font-weight:600">q̈:</span> ${q_ddot.join(' , ')}
+      </div>
+    </div>
+
+    <!-- Matriz D -->
+    <div class="card">
+      <div class="ct">
+        <div class="ct-bar" style="background:var(--blue)"></div>
+        ★&nbsp; Matriz de Inercias D &nbsp;<span style="font-size:9px;color:var(--muted2)">(${gdl}×${gdl}) · diagonal en azul · simétrica</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted2);margin-bottom:4px">Expresiones con hover para ver la fórmula completa. Diagonal = inercia propia · Off-diagonal = acoplamiento</div>
+      ${dHtml}
+    </div>
+
+    <!-- Vector H -->
+    <div class="card">
+      <div class="ct">
+        <div class="ct-bar" style="background:var(--orange)"></div>
+        ★&nbsp; Vector Coriolis / Centrífugas H &nbsp;<span style="font-size:9px;color:var(--muted2)">(${gdl}×1) · h = Σ hᵢₖₘ · q̇ₖ · q̇ₘ</span>
+      </div>
+      ${hHtml}
+    </div>
+
+    <!-- Vector C -->
+    <div class="card">
+      <div class="ct">
+        <div class="ct-bar" style="background:var(--green)"></div>
+        ★&nbsp; Vector de Gravedad C &nbsp;<span style="font-size:9px;color:var(--muted2)">(${gdl}×1) · c = −m·gᵀ·U·r</span>
+      </div>
+      ${cHtml}
+    </div>
+
+    <!-- Ecuaciones τ -->
+    <div class="card">
+      <div class="ct">
+        <div class="ct-bar" style="background:var(--purple)"></div>
+        ★&nbsp; Ecuaciones de Movimiento por Articulación
+      </div>
+      ${tauHtml}
+    </div>
+
+  `;
+}
+
+// Inicializar la tabla DH al cargar la página
+document.addEventListener('DOMContentLoaded',()=>{
+  leSetGDL();
+});
+
+</script>
+<div style="position:fixed;bottom:12px;right:14px;z-index:9999;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.35);border-radius:8px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#7c3aed;letter-spacing:.5px;backdrop-filter:blur(8px);pointer-events:none" title="Recarga forzada si no ves los cambios: Cmd+Shift+R">v1.7 · 24 mar 2026</div>
+</body>
+</html>

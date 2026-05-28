@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sshpass -p 'vianka12' ssh moule3d@192.168.68.130 'cd ~/moule3d && kill 1594 && sleep 1 && nohup node server.js > /tmp/server.log 2>&1 & echo \"\"PID=$!\"\"')",
+      "Bash(sshpass -p 'vianka12' ssh moule3d@192.168.68.130 'pgrep -a node | grep server && cat /tmp/server.log')",
+      "Bash(sshpass -p 'vianka12' scp /Users/mateobarraganleon/universidad/robotica2/manipulator-serial.js moule3d@192.168.68.130:~/moule3d/manipulator-serial.js)",
+      "Bash(sshpass -p 'vianka12' scp /Users/mateobarraganleon/universidad/robotica2/manipulator.html moule3d@192.168.68.130:~/moule3d/public/manipulator.html)",
+      "Bash(sshpass -p 'vianka12' ssh moule3d@192.168.68.130 'pkill -f \"\"node server.js\"\" 2>/dev/null; sleep 1; cd ~/moule3d && nohup node server.js > /tmp/server.log 2>&1 & sleep 2 && pgrep -a node | grep server && echo \"\"OK\"\"')",
+      "Bash(sshpass -p 'vianka12' ssh moule3d@192.168.68.130 'pkill -f \"\"node server.js\"\"; sleep 1; echo done')",
+      "Bash(sshpass -p 'vianka12' ssh -o ConnectTimeout=10 moule3d@192.168.68.130 'echo ping')"
+    ]
+  }
+}

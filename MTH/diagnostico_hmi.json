@@ -1,0 +1,91 @@
+{
+  "run": {
+    "step_lin_mm": 1.0,
+    "step_ang_deg": 1.0,
+    "voxel_mm": 1.0,
+    "configurations_total": 461064450
+  },
+  "workspace": {
+    "reachable_volume_cm3": 14785.078,
+    "reachable_volume_mm3": 14785078.0,
+    "occupied_voxels": 14785078,
+    "shell_voxels": 348502,
+    "bbox": {
+      "Px_min": 0.0,
+      "Px_max": 265.0,
+      "Py_min": -56.0,
+      "Py_max": 190.0,
+      "Pz_min": 119.0,
+      "Pz_max": 351.0
+    }
+  },
+  "boundary_py_pz": {
+    "left": {
+      "min": -56.0,
+      "max": -51.37555694580078,
+      "variation": 4.624443054199219,
+      "pz_at_min": 119.0,
+      "pz_at_max": 240.0
+    },
+    "right": {
+      "min": 140.92678833007812,
+      "max": 190.0,
+      "variation": 49.073211669921875,
+      "pz_at_min": 119.0,
+      "pz_at_max": 175.0
+    },
+    "exact_meta": {
+      "py_step_mm": 0.5,
+      "pz_step_mm": 0.5,
+      "servo_step_deg": 0.1,
+      "left_cap_width_mm": 4.6244433464506045,
+      "right_cap_width_mm": 56.0,
+      "top_flat_start_py_mm": -51.0,
+      "top_flat_end_py_mm": 138.5
+    }
+  },
+  "ik_validation": {
+    "total_points": 461064450,
+    "total_valid": 461064450,
+    "pct": 100.0,
+    "max_err": 1.52587890625e-05,
+    "summary_path": "MTH/inversa/validacion_resumen.npz"
+  },
+  "findings": [
+    {
+      "type": "workspace_limitation",
+      "title": "Borde superior e inferior recortado por el servo",
+      "detail": "La frontera real no llena una caja completa; el último eje rotacional recorta la zona alta y baja del workspace."
+    },
+    {
+      "type": "workspace_asymmetry",
+      "title": "Recorte fuerte en el lado derecho",
+      "detail": "La frontera derecha en Py cambia 56.00 mm entre zonas de Pz; esa mordida es la principal limitación visible."
+    },
+    {
+      "type": "workspace_asymmetry",
+      "title": "Recorte leve en el lado izquierdo",
+      "detail": "La frontera izquierda también se recorta 4.62 mm; por eso visualmente casi se ve recta."
+    },
+    {
+      "type": "modeling_note",
+      "title": "No usar ConvexHull como workspace real",
+      "detail": "La envolvente geométrica rellena huecos no alcanzables. Para HMI debe usarse el mapa voxelizado y su frontera real."
+    },
+    {
+      "type": "validation_ok",
+      "title": "Cinemática inversa consistente",
+      "detail": "La validación de IK sobre las MTH generadas no mostró fallos numéricos dentro del barrido ejecutado."
+    }
+  ],
+  "files": {
+    "interactive_map": "MTH/alcance_voxelizado.npz",
+    "interactive_viewer": "/Users/mateobarraganleon/universidad/robotica2/workspace_3d_viewer.py",
+    "report_png": "MTH/reportes/ultimo_reporte_volumen.png",
+    "exact_boundary_npz": "MTH/frontera_real_py_pz.npz",
+    "exact_boundary_csv": "MTH/frontera_real_py_pz.csv",
+    "exact_boundary_png": "MTH/frontera_real_py_pz.png",
+    "ik_summary_npz": "MTH/inversa/validacion_resumen.npz",
+    "ik_examples_json": "MTH/inversa/validacion_ejemplos.json"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "moule3d-ops-panel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel interno de gestion para Moule 3D",
+  "scripts": {
+    "start": "node server.js",
+    "manipulador": "bash scripts/start-manipulator.sh",
+    "pi:panel": "bash scripts/pi-arrancar-panel.sh",
+    "create:user": "node scripts/create-user.js",
+    "typecheck": "tsc --noEmit",
+    "build:web": "cd web && npm run build && node ../scripts/deploy-landing.js"
+  },
+  "dependencies": {
+    "@21st-sdk/agent": "^0.0.8",
+    "dotenv": "^17.2.2",
+    "serialport": "^13.0.0",
+    "twilio": "^5.13.0",
+    "ws": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

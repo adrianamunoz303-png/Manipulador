@@ -1,0 +1,15 @@
+DIAGNOSTICO PARA HMI
+
+Barrido: 1 mm / 1°
+Resolucion voxel: 1.0 mm
+Configuraciones evaluadas: 461,064,450
+Volumen alcanzable: 14785.08 cm3
+Frontera izquierda (variacion): 4.62 mm
+Frontera derecha (variacion): 56.00 mm
+
+Hallazgos:
+- Borde superior e inferior recortado por el servo: La frontera real no llena una caja completa; el último eje rotacional recorta la zona alta y baja del workspace.
+- Recorte fuerte en el lado derecho: La frontera derecha en Py cambia 56.00 mm entre zonas de Pz; esa mordida es la principal limitación visible.
+- Recorte leve en el lado izquierdo: La frontera izquierda también se recorta 4.62 mm; por eso visualmente casi se ve recta.
+- No usar ConvexHull como workspace real: La envolvente geométrica rellena huecos no alcanzables. Para HMI debe usarse el mapa voxelizado y su frontera real.
+- Cinemática inversa consistente: La validación de IK sobre las MTH generadas no mostró fallos numéricos dentro del barrido ejecutado.

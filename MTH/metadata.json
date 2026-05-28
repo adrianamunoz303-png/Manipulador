@@ -1,0 +1,47 @@
+{
+  "version": "2.0",
+  "kinematics": "compensated_rx_theta_real",
+  "formula": {
+    "Px": "d2",
+    "Py": "d1 + 56*(cos(theta_real)-1)",
+    "Pz": "295 - d3 - 56*sin(theta_real)",
+    "theta_real": "(servo-36) * 90/38"
+  },
+  "ranges": {
+    "d1_mm": [
+      0.0,
+      190.0
+    ],
+    "d2_mm": [
+      0.0,
+      265.0
+    ],
+    "d3_mm": [
+      0.0,
+      120.0
+    ],
+    "servo_deg": [
+      0.0,
+      74.0
+    ]
+  },
+  "steps": {
+    "linear_mm": 1.0,
+    "angular_deg": 1.0
+  },
+  "counts": {
+    "d1": 191,
+    "d2": 266,
+    "d3": 121,
+    "servo": 75,
+    "cross_section": 2413950,
+    "total": 461064450
+  },
+  "paths": {
+    "root": "MTH",
+    "direct_root": "MTH/directa",
+    "inverse_root": "MTH/inversa",
+    "query_root": "MTH/consultas",
+    "batch_pattern": "MTH/directa/batch_d1_XXXmm.npz"
+  }
+}
