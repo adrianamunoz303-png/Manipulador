@@ -1382,7 +1382,6 @@ function updatePos(p){
   document.getElementById('olZ').textContent='Z='+pos.z.toFixed(1)+'mm';
   document.getElementById('olS').textContent='θ='+pos.servo+'°';
   // 3D
-  updateRobotPose(pos.x,pos.y,pos.z,pos.servo);
   updateVolRobotPose(pos.x,pos.y,pos.z,pos.servo);
 }
 
@@ -1499,7 +1498,8 @@ const SERVO_MIN=0;
 const SERVO_MAX=74;
 const SERVO_HOME=36;  // 36° = brazo horizontal
 const SERVO_REAL_SCALE=90/(74-36); // 38° mecánicos → 90° reales
-const SERVO_SPAN=SERVO_MAX-SERVO_MIN;
+const D1_MAX=LIM.y;    // 190 mm — recorrido máximo motorY
+const D2_MAX=LIM.x;    // 265 mm — recorrido máximo motorX
 // CD v1.7:
 //   Px = d2
 //   Py = d1 + L2·cos(theta_real) - L2
@@ -1513,9 +1513,6 @@ function getZOffsetSuelo(){
 function setZOffsetSuelo(mm){localStorage.setItem(LS_KEY_Z_SUELO,String(mm))}
 function pzDhToAlturaSuelo(pzDh){return pzDh+getZOffsetSuelo()}
 function alturaSueloToPzDh(zSuelo){return zSuelo-getZOffsetSuelo()}
-const BASE_HEIGHT=230; // mm — altura del eje Y sobre el suelo
-const X_OFFSET_Y=50;   // mm — eje X por encima del eje Y
-const Z_OFFSET_Y=10;   // mm — eje Z por encima del eje Y
 const X_MIN_OFF=50;    // mm — distancia mínima del carro X al poste Y (clearance)
 const Z_FRONT=20;      // mm — offset frontal del carro Z respecto al riel X
 // HTML/UI y Arduino usan el mismo θ4 real: 36° horizontal, 74° ≈ abajo.
@@ -1925,7 +1922,6 @@ function updateHTM(){
 // THREE.JS 3D SCENE
 // ══════════════════════════════════════════════════════════════
 let renderer,camera,scene,animId;
-let robotGroups={};
 let wireMode=false;
 
 // Materials
@@ -2001,10 +1997,6 @@ function loadSTL(){
   });
   camTarget.set(0,0,0);
   updateCamera();
-}
-
-function updateRobotPose(x,y,z,servo){
-  // El STL es un modelo estático — sin animación de pose
 }
 
 // ── Orbit camera ──
