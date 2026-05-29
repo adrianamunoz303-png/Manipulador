@@ -11,7 +11,7 @@ const os          = require('os');
 const { spawn }   = require('child_process');
 const manipulator = require('./manipulator-serial');
 
-const PORT       = Number(process.env.PORT || 3000);
+const PORT       = Number(process.env.PORT || 3001);
 const ROOT_DIR   = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 

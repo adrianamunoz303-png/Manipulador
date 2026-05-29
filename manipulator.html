@@ -303,9 +303,13 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
 #panel-control .right{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 
 /* ── Kin panels ── */
-.kin-body{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden}
+.kin-body{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.kin-top{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden;min-height:0}
 .kin-left{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)}
 .kin-right{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.kin-viz{height:280px;flex-shrink:0;border-top:1px solid var(--gb);position:relative;overflow:hidden;background:var(--bg0)}
+.kin-viz canvas{width:100%;height:100%;display:block;cursor:grab}
+.kin-viz canvas:active{cursor:grabbing}
 
 /* ── HTM panel ── */
 #panel-htm .body{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:16px;flex:1}
@@ -317,6 +321,9 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
 .goto-row{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:8px;margin-bottom:8px}
 .goto-lbl{font-weight:800;font-size:13px;font-family:var(--mono)}
 .goto-lbl.x{color:#dc2626}.goto-lbl.y{color:#059669}.goto-lbl.z{color:#2563eb}
+
+/* ── Tiny field label ── */
+.tlbl{font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px}
 
 /* ── Method tabs ── */
 .method-tabs{display:flex;gap:6px;margin-bottom:12px}
@@ -419,6 +426,10 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Perfiles
     </div>
+    <div class="nav-item" onclick="showPanel('vision')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Visión
+    </div>
     <div class="nav-divider"></div>
     <div class="nav-label">Sistema</div>
     <div class="nav-item" onclick="showPanel('test')">
@@ -440,7 +451,7 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
   <div class="panel-header">
     <div>
       <div class="panel-title">Vista 3D — Robot en Tiempo Real</div>
-      <div class="panel-sub">Visualización del manipulador · X 265mm · Y 190mm · Z 120mm · Servo 0–74° real</div>
+      <div class="panel-sub">Visualización del manipulador · X 227mm · Y 292mm · Z 232mm · Servo 0–74° real</div>
     </div>
     <div id="connBadge" class="disconnected">
       <span class="badge-dot"></span><span id="connText">Desconectado</span>
@@ -480,9 +491,9 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
       <div class="card">
         <div class="ct"><div class="ct-bar"></div>Posición Actual</div>
         <div class="pos-grid">
-          <div class="pos-card unhomed" id="pX"><div class="pos-lbl">Eje X</div><div class="pos-val" id="vX">—</div><div class="pos-unit">mm / 265</div><div class="pos-bar"><div class="pos-bar-fill" id="bX" style="width:0%"></div></div></div>
-          <div class="pos-card unhomed" id="pY"><div class="pos-lbl">Eje Y</div><div class="pos-val" id="vY">—</div><div class="pos-unit">mm / 190</div><div class="pos-bar"><div class="pos-bar-fill" id="bY" style="width:0%"></div></div></div>
-          <div class="pos-card unhomed" id="pZ"><div class="pos-lbl">Eje Z</div><div class="pos-val" id="vZ">—</div><div class="pos-unit">mm / 120</div><div class="pos-bar"><div class="pos-bar-fill" id="bZ" style="width:0%"></div></div></div>
+          <div class="pos-card unhomed" id="pX"><div class="pos-lbl">Eje X</div><div class="pos-val" id="vX">—</div><div class="pos-unit">mm / 227</div><div class="pos-bar"><div class="pos-bar-fill" id="bX" style="width:0%"></div></div></div>
+          <div class="pos-card unhomed" id="pY"><div class="pos-lbl">Eje Y</div><div class="pos-val" id="vY">—</div><div class="pos-unit">mm / 292</div><div class="pos-bar"><div class="pos-bar-fill" id="bY" style="width:0%"></div></div></div>
+          <div class="pos-card unhomed" id="pZ"><div class="pos-lbl">Eje Z</div><div class="pos-val" id="vZ">—</div><div class="pos-unit">mm / 232</div><div class="pos-bar"><div class="pos-bar-fill" id="bZ" style="width:0%"></div></div></div>
           <div class="pos-card" id="pS"><div class="pos-lbl">Servo θ</div><div class="pos-val" id="vS">36</div><div class="pos-unit">° real / [0,74]</div><div class="pos-bar"><div class="pos-bar-fill" id="bS" style="width:48.6%"></div></div></div>
         </div>
       </div>
@@ -561,9 +572,9 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
       <!-- Posición absoluta -->
       <div class="card">
         <div class="ct"><div class="ct-bar"></div>Ir a Posición Absoluta</div>
-        <div class="goto-row"><span class="goto-lbl x">X</span><input type="number" id="gX" min="0" max="265" step="0.5" placeholder="0 – 265"/><button class="btn btn-xs btn-primary" onclick="gotoAx('X','gX',265)" id="bgX" disabled>Ir</button></div>
-        <div class="goto-row"><span class="goto-lbl y">Y</span><input type="number" id="gY" min="0" max="190" step="0.5" placeholder="0 – 190"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Y','gY',190)" id="bgY" disabled>Ir</button></div>
-        <div class="goto-row"><span class="goto-lbl z">Z</span><input type="number" id="gZ" min="0" max="120" step="0.5" placeholder="0 – 120"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Z','gZ',120)" id="bgZ" disabled>Ir</button></div>
+        <div class="goto-row"><span class="goto-lbl x">X</span><input type="number" id="gX" min="0" max="227" step="0.5" placeholder="0 – 227"/><button class="btn btn-xs btn-primary" onclick="gotoAx('X','gX',227)" id="bgX" disabled>Ir</button></div>
+        <div class="goto-row"><span class="goto-lbl y">Y</span><input type="number" id="gY" min="0" max="292" step="0.5" placeholder="0 – 292"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Y','gY',292)" id="bgY" disabled>Ir</button></div>
+        <div class="goto-row"><span class="goto-lbl z">Z</span><input type="number" id="gZ" min="0" max="232" step="0.5" placeholder="0 – 232"/><button class="btn btn-xs btn-primary" onclick="gotoAx('Z','gZ',232)" id="bgZ" disabled>Ir</button></div>
         <p style="font-size:10px;color:var(--muted2);margin-top:4px">Calcula delta desde posición actual y envía relativo.</p>
       </div>
     </div>
@@ -594,26 +605,34 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
     <div><div class="panel-title">Cinemática Directa</div><div class="panel-sub">Dados los valores articulares → posición y orientación del efector final</div></div>
   </div>
   <div class="kin-body">
-    <div class="kin-left">
-      <div class="card">
-        <div class="ct"><div class="ct-bar"></div>Método</div>
-        <div class="method-tabs">
-          <div class="mtab active" id="mt-geom" onclick="setKinMethod('direct','geom')">Geométrico</div>
-          <div class="mtab" id="mt-dh"   onclick="setKinMethod('direct','dh')">Analítico (DH)</div>
+    <div class="kin-top">
+      <div class="kin-left">
+        <div class="card">
+          <div class="ct"><div class="ct-bar"></div>Método</div>
+          <div class="method-tabs">
+            <div class="mtab active" id="mt-geom" onclick="setKinMethod('direct','geom')">Geométrico</div>
+            <div class="mtab" id="mt-dh"   onclick="setKinMethod('direct','dh')">Analítico (DH)</div>
+          </div>
+          <div class="ct"><div class="ct-bar"></div>Variables Articulares</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">q₁ = X (mm)</label><input type="number" id="dk_x" min="0" max="227" value="0" step="0.5" oninput="computeFK()"/></div>
+            <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">q₂ = Y (mm)</label><input type="number" id="dk_y" min="0" max="292" value="0" step="0.5" oninput="computeFK()"/></div>
+            <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">q₃ = Z (mm)</label><input type="number" id="dk_z" min="0" max="232" value="0" step="0.5" oninput="computeFK()"/></div>
+            <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">q₄ = θ servo real (°) — 36° horizontal</label><input type="number" id="dk_s" min="0" max="74" value="36" step="1" oninput="computeFK()"/></div>
+          </div>
+          <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrPos('dk')">← Usar posición actual</button>
+          <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendFKToRobot()" id="bFKSend" disabled>Enviar al Robot</button>
         </div>
-        <div class="ct"><div class="ct-bar"></div>Variables Articulares</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">q₁ = X (mm)</label><input type="number" id="dk_x" min="0" max="265" value="0" step="0.5" oninput="computeFK()"/></div>
-          <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">q₂ = Y (mm)</label><input type="number" id="dk_y" min="0" max="190" value="0" step="0.5" oninput="computeFK()"/></div>
-          <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">q₃ = Z (mm)</label><input type="number" id="dk_z" min="0" max="120" value="0" step="0.5" oninput="computeFK()"/></div>
-          <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">q₄ = θ servo real (°) — 36° horizontal</label><input type="number" id="dk_s" min="0" max="74" value="36" step="1" oninput="computeFK()"/></div>
-        </div>
-        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrPos('dk')">← Usar posición actual</button>
-        <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendFKToRobot()" id="bFKSend" disabled>Enviar al Robot</button>
+      </div>
+      <div class="kin-right" id="fk-result">
+        <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa valores articulares para calcular la cinemática directa.</div>
       </div>
     </div>
-    <div class="kin-right" id="fk-result">
-      <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa valores articulares para calcular la cinemática directa.</div>
+    <!-- Visor 3D abajo (ocupa todo el ancho) -->
+    <div class="kin-viz">
+      <canvas id="canvas_fk_viz"></canvas>
+      <div style="position:absolute;top:8px;left:0;right:0;text-align:center;pointer-events:none;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2)">Configuración del Robot en 3D · Arrastra para rotar · Scroll para zoom</div>
+      <button class="btn btn-xs btn-secondary" style="position:absolute;top:8px;right:8px" onclick="resetKinViz('fk')">⟳</button>
     </div>
   </div>
 </div>
@@ -624,28 +643,36 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
     <div><div class="panel-title">Cinemática Inversa</div><div class="panel-sub">Dados Pₓ, Pᵧ, Pz y θ₄ → d₁, d₂, d₃ requeridos según T₀₄</div></div>
   </div>
   <div class="kin-body">
-    <div class="kin-left">
-      <div class="card">
-        <div class="ct"><div class="ct-bar"></div>Método</div>
-        <div class="method-tabs">
-          <div class="mtab active" id="ik-mt-geom" onclick="setKinMethod('inverse','geom')">Geométrico</div>
-          <div class="mtab" id="ik-mt-anal"        onclick="setKinMethod('inverse','anal')">Analítico</div>
+    <div class="kin-top">
+      <div class="kin-left">
+        <div class="card">
+          <div class="ct"><div class="ct-bar"></div>Método</div>
+          <div class="method-tabs">
+            <div class="mtab active" id="ik-mt-geom" onclick="setKinMethod('inverse','geom')">Geométrico</div>
+            <div class="mtab" id="ik-mt-anal"        onclick="setKinMethod('inverse','anal')">Analítico</div>
+          </div>
+          <div class="ct"><div class="ct-bar"></div>Posición Deseada del Efector</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">Pₓ (mm) — posición X</label><input type="number" id="ik_px" min="0" max="227" value="40" step="0.5" oninput="computeIK()"/></div>
+            <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">Pᵧ (mm) — d₁ + 40·[cos(θ_real) − 1]</label><input type="number" id="ik_py" min="-45" max="292" value="0"  step="0.5" oninput="computeIK()"/></div>
+            <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">Pz (mm) — 230 − d₃ − 40·sin(θ_real)</label><input type="number" id="ik_pz" min="-50" max="275" value="230"  step="0.5" oninput="computeIK()"/></div>
+            <p style="font-size:9px;color:var(--muted2);margin:-4px 0 0">Aquí ingresas la traslación de <b>T₀₄</b>; la orientación queda definida por <b>θ₄</b>, no por la carrera cruda del eje Z.</p>
+            <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">θ deseado (°) — servo real, 36° horizontal</label><input type="number" id="ik_th" min="0" max="74" value="36"  step="1"   oninput="computeIK()"/></div>
+          </div>
+          <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrentPoseForIK()">← Usar pose actual del efector</button>
+          <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="computeIK()">Calcular IK</button>
+          <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendIKToRobot()" id="bIKSend" disabled>Enviar al Robot</button>
         </div>
-        <div class="ct"><div class="ct-bar"></div>Posición Deseada del Efector</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div><label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:3px">Pₓ (mm) — posición X</label><input type="number" id="ik_px" min="0" max="265" value="56" step="0.5" oninput="computeIK()"/></div>
-          <div><label style="font-size:10px;color:#059669;font-weight:700;display:block;margin-bottom:3px">Pᵧ (mm) — d₁ + 56·[cos(θ_real) − 1]</label><input type="number" id="ik_py" min="-60" max="190" value="0"  step="0.5" oninput="computeIK()"/></div>
-          <div><label style="font-size:10px;color:#2563eb;font-weight:700;display:block;margin-bottom:3px">Pz (mm) — 295 − d₃ − 56·sin(θ_real)</label><input type="number" id="ik_pz" min="110" max="360" value="295"  step="0.5" oninput="computeIK()"/></div>
-          <p style="font-size:9px;color:var(--muted2);margin:-4px 0 0">Aquí ingresas la traslación de <b>T₀₄</b>; la orientación queda definida por <b>θ₄</b>, no por la carrera cruda del eje Z.</p>
-          <div><label style="font-size:10px;color:var(--purple);font-weight:700;display:block;margin-bottom:3px">θ deseado (°) — servo real, 36° horizontal</label><input type="number" id="ik_th" min="0" max="74" value="36"  step="1"   oninput="computeIK()"/></div>
-        </div>
-        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="useCurrentPoseForIK()">← Usar pose actual del efector</button>
-        <button class="btn btn-primary btn-full btn-sm" style="margin-top:10px" onclick="computeIK()">Calcular IK</button>
-        <button class="btn btn-secondary btn-full btn-sm" style="margin-top:5px" onclick="sendIKToRobot()" id="bIKSend" disabled>Enviar al Robot</button>
+      </div>
+      <div class="kin-right" id="ik-result">
+        <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa la posición objetivo para calcular la cinemática inversa.</div>
       </div>
     </div>
-    <div class="kin-right" id="ik-result">
-      <div style="color:var(--muted2);text-align:center;padding:40px;font-size:12px">Ingresa la posición objetivo para calcular la cinemática inversa.</div>
+    <!-- Visor 3D abajo (ocupa todo el ancho) -->
+    <div class="kin-viz">
+      <canvas id="canvas_ik_viz"></canvas>
+      <div style="position:absolute;top:8px;left:0;right:0;text-align:center;pointer-events:none;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2)">Configuración del Robot en 3D · Arrastra para rotar · Scroll para zoom</div>
+      <button class="btn btn-xs btn-secondary" style="position:absolute;top:8px;right:8px" onclick="resetKinViz('ik')">⟳</button>
     </div>
   </div>
 </div>
@@ -653,7 +680,7 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
 <!-- ── PANEL: Matrices MTH ── -->
 <div id="panel-htm" class="panel">
   <div class="panel-header">
-    <div><div class="panel-title">Matrices de Transformación Homogénea (MTH)</div><div class="panel-sub">CD Geométrico · CD DH (⁰A₁…³A₄) · CI Geométrico · CI Analítico DH — L1=50mm · L2=56mm</div></div>
+    <div><div class="panel-title">Matrices de Transformación Homogénea (MTH)</div><div class="panel-sub">CD Geométrico · CD DH (⁰A₁…³A₄) · CI Geométrico · CI Analítico DH — L1=55mm · L2=40mm</div></div>
   </div>
   <div class="body" style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;flex:1">
 
@@ -719,7 +746,7 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
           <div id="htm_a12"></div>
         </div>
         <div class="kin-step" style="margin-bottom:5px">
-          <div class="kin-step-title" style="font-size:10px">²A₃ — d₃ motor Z (<span id="htm_dh_d3">—</span> mm) · L₁=50mm</div>
+          <div class="kin-step-title" style="font-size:10px">²A₃ — d₃ motor Z (<span id="htm_dh_d3">—</span> mm) · L₁=55mm</div>
           <div id="htm_a23"></div>
         </div>
         <div class="kin-step" style="margin-bottom:5px">
@@ -1004,7 +1031,7 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
   <div class="panel-header">
     <div>
       <div class="panel-title">Planificación de Trayectorias</div>
-      <div class="panel-sub">Trapezoidal · Cúbico · Eje a Eje · Simultáneo · Asociado · Analítico — 3P+R (Q1..Q3: mm · Q4: °)</div>
+      <div class="panel-sub">Localización Inicial · Localización Final · Tipo de Trayectoria · Tipo de Interpolador · Espacio Articular + Espacio Cartesiano</div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:330px 1fr;flex:1;overflow:hidden">
@@ -1012,34 +1039,68 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
     <!-- ── LEFT: inputs ── -->
     <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
 
-      <!-- Posición Inicial -->
+      <!-- Localización Inicial (Li) -->
       <div class="card">
-        <div class="ct"><div class="ct-bar" style="background:var(--green)"></div>Posición Inicial — Q_i</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₁  X (mm)</div>
-            <input type="number" id="traj_qi1" value="0" min="0" max="265" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₂  Y (mm)</div>
-            <input type="number" id="traj_qi2" value="0" min="0" max="190" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₃  Z (mm)</div>
-            <input type="number" id="traj_qi3" value="0" min="0" max="120" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₄  θ servo (°)</div>
-            <input type="number" id="traj_qi4" value="36" min="0" max="74" step="0.5"/></div>
+        <div class="ct"><div class="ct-bar" style="background:var(--green)"></div>Localización Inicial (Li)</div>
+        <div class="method-tabs" style="margin-bottom:8px">
+          <div class="mtab active" id="li-tab-art"  onclick="setLocMethod('li','art')">Articular</div>
+          <div class="mtab"        id="li-tab-cart" onclick="setLocMethod('li','cart')">Cartesiana</div>
         </div>
-        <button class="btn btn-xs btn-secondary" style="margin-top:8px;width:100%" onclick="trajLoadCurrent()">↓  Capturar posición actual</button>
+        <!-- Método articular: valores q -->
+        <div id="li-art-inputs">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+            <div><div class="tlbl">Q₁ · X (mm)</div><input type="number" id="traj_qi1" value="0"  min="0" max="227" step="0.5" oninput="onLocArtChanged('li')"/></div>
+            <div><div class="tlbl">Q₂ · Y (mm)</div><input type="number" id="traj_qi2" value="0"  min="0" max="292" step="0.5" oninput="onLocArtChanged('li')"/></div>
+            <div><div class="tlbl">Q₃ · Z (mm)</div><input type="number" id="traj_qi3" value="0"  min="0" max="232" step="0.5" oninput="onLocArtChanged('li')"/></div>
+            <div><div class="tlbl">Q₄ · θ (°)</div> <input type="number" id="traj_qi4" value="36" min="0" max="74"  step="0.5" oninput="onLocArtChanged('li')"/></div>
+          </div>
+          <div id="li-mth-preview" style="padding:5px 7px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);border-radius:6px;font-size:9px;font-family:var(--mono);color:var(--muted2);line-height:1.6">
+            MTH(Li): —
+          </div>
+        </div>
+        <!-- Método cartesiano: posición + θ → CI → articulares -->
+        <div id="li-cart-inputs" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+            <div><div class="tlbl">Pₓ (mm)</div><input type="number" id="traj_li_px" value="0"   min="0"   max="227" step="0.5" oninput="onLocCartChanged('li')"/></div>
+            <div><div class="tlbl">Pᵧ (mm)</div><input type="number" id="traj_li_py" value="0"   min="-45" max="292" step="0.5" oninput="onLocCartChanged('li')"/></div>
+            <div><div class="tlbl">Pz (mm)</div> <input type="number" id="traj_li_pz" value="230" min="-50" max="275" step="0.5" oninput="onLocCartChanged('li')"/></div>
+            <div><div class="tlbl">θ₄ (°)</div>  <input type="number" id="traj_li_th" value="36"  min="0"   max="74"  step="1"   oninput="onLocCartChanged('li')"/></div>
+          </div>
+          <div id="li-art-computed" style="padding:5px 7px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:9px;font-family:var(--mono);color:var(--muted2);line-height:1.6">
+            q(Li) via CI: —
+          </div>
+        </div>
+        <button class="btn btn-xs btn-secondary" style="margin-top:7px;width:100%" onclick="trajLoadCurrent('li')">↓ Capturar posición actual del robot</button>
       </div>
 
-      <!-- Posición Final -->
+      <!-- Localización Final (Lf) -->
       <div class="card">
-        <div class="ct"><div class="ct-bar" style="background:var(--red)"></div>Posición Final — Q_f</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₁  X (mm)</div>
-            <input type="number" id="traj_qf1" value="100" min="0" max="265" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₂  Y (mm)</div>
-            <input type="number" id="traj_qf2" value="80" min="0" max="190" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₃  Z (mm)</div>
-            <input type="number" id="traj_qf3" value="60" min="0" max="120" step="0.5"/></div>
-          <div><div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Q₄  θ servo (°)</div>
-            <input type="number" id="traj_qf4" value="36" min="0" max="74" step="0.5"/></div>
+        <div class="ct"><div class="ct-bar" style="background:var(--red)"></div>Localización Final (Lf)</div>
+        <div class="method-tabs" style="margin-bottom:8px">
+          <div class="mtab active" id="lf-tab-art"  onclick="setLocMethod('lf','art')">Articular</div>
+          <div class="mtab"        id="lf-tab-cart" onclick="setLocMethod('lf','cart')">Cartesiana</div>
+        </div>
+        <div id="lf-art-inputs">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+            <div><div class="tlbl">Q₁ · X (mm)</div><input type="number" id="traj_qf1" value="100" min="0" max="227" step="0.5" oninput="onLocArtChanged('lf')"/></div>
+            <div><div class="tlbl">Q₂ · Y (mm)</div><input type="number" id="traj_qf2" value="80"  min="0" max="292" step="0.5" oninput="onLocArtChanged('lf')"/></div>
+            <div><div class="tlbl">Q₃ · Z (mm)</div><input type="number" id="traj_qf3" value="60"  min="0" max="232" step="0.5" oninput="onLocArtChanged('lf')"/></div>
+            <div><div class="tlbl">Q₄ · θ (°)</div> <input type="number" id="traj_qf4" value="36"  min="0" max="74"  step="0.5" oninput="onLocArtChanged('lf')"/></div>
+          </div>
+          <div id="lf-mth-preview" style="padding:5px 7px;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.25);border-radius:6px;font-size:9px;font-family:var(--mono);color:var(--muted2);line-height:1.6">
+            MTH(Lf): —
+          </div>
+        </div>
+        <div id="lf-cart-inputs" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+            <div><div class="tlbl">Pₓ (mm)</div><input type="number" id="traj_lf_px" value="100" min="0"   max="227" step="0.5" oninput="onLocCartChanged('lf')"/></div>
+            <div><div class="tlbl">Pᵧ (mm)</div><input type="number" id="traj_lf_py" value="80"  min="-45" max="292" step="0.5" oninput="onLocCartChanged('lf')"/></div>
+            <div><div class="tlbl">Pz (mm)</div> <input type="number" id="traj_lf_pz" value="170" min="-50" max="275" step="0.5" oninput="onLocCartChanged('lf')"/></div>
+            <div><div class="tlbl">θ₄ (°)</div>  <input type="number" id="traj_lf_th" value="36"  min="0"   max="74"  step="1"   oninput="onLocCartChanged('lf')"/></div>
+          </div>
+          <div id="lf-art-computed" style="padding:5px 7px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:9px;font-family:var(--mono);color:var(--muted2);line-height:1.6">
+            q(Lf) via CI: —
+          </div>
         </div>
       </div>
 
@@ -1048,41 +1109,31 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
         <div class="ct"><div class="ct-bar" style="background:var(--blue)"></div>Configuración</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div>
-            <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Tipo de trayectoria</div>
+            <div class="tlbl">Tipo de trayectoria</div>
             <select id="traj_tipo" onchange="trajOnTipoChange()">
               <option value="eje_eje">Eje a Eje</option>
               <option value="simultaneo">Ejes Simultáneos</option>
-              <option value="aso">Asociado (Aso)</option>
+              <option value="aso">Isócrona (Coordinado)</option>
               <option value="analitica">Analítica (línea recta EF)</option>
             </select>
           </div>
           <div>
-            <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Interpolador</div>
-            <select id="traj_interp">
+            <div class="tlbl">Tipo de interpolador</div>
+            <select id="traj_interp" onchange="trajOnInterpChange()">
               <option value="trap">Trapezoidal</option>
               <option value="cubico">Cúbico</option>
             </select>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div>
-              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Puntos N</div>
-              <input type="number" id="traj_N" value="10" min="2" max="500" step="1"/>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">V_máx prism. (mm/s)</div>
-              <input type="number" id="traj_vmax_p" value="80" min="1" max="300" step="1"/>
+            <div id="traj_interp_note" style="display:none;font-size:9px;color:var(--orange);margin-top:3px;padding:3px 6px;background:rgba(234,88,12,.08);border-radius:4px">
+              ⚠ Analítica solo funciona con Cúbico
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div>
-              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">Acel. prism. (mm/s²)</div>
-              <input type="number" id="traj_a_p" value="150" min="1" max="1000" step="10"/>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted2);font-weight:600;margin-bottom:3px">V_máx rot. (°/s)</div>
-              <input type="number" id="traj_vmax_r" value="20" min="1" max="90" step="1"/>
-            </div>
+          <div>
+            <div class="tlbl">Puntos intermedios N (2 – 20)</div>
+            <input type="number" id="traj_N" value="10" min="2" max="20" step="1"/>
           </div>
+        </div>
+        <div style="margin-top:8px;padding:5px 8px;background:rgba(0,0,0,.03);border-radius:5px;font-size:9px;color:var(--muted2)">
+          El tiempo, la velocidad y la aceleración se calculan internamente según las condiciones del actuador
         </div>
       </div>
 
@@ -1102,29 +1153,79 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
       <!-- Estado -->
       <div id="traj_status" class="card" style="font-size:11px;color:var(--muted2);line-height:1.8;display:none"></div>
 
+      <!-- MTH T₀E Li y Lf (resultado del cálculo) -->
+      <div id="traj_mth_section" style="display:none" class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--purple)"></div>MTH T₀E — Localizaciones</div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;overflow-x:auto">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--green);font-family:var(--mono);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px">T₀E Li (inicio)</div>
+            <div id="traj_mth_i"></div>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--red);font-family:var(--mono);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px">T₀E Lf (final)</div>
+            <div id="traj_mth_f"></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /left -->
 
-    <!-- ── RIGHT: visualización 2D ── -->
+    <!-- ── RIGHT: visualizaciones (tabs) ── -->
     <div style="display:flex;flex-direction:column;overflow:hidden;background:var(--bg0)">
-      <div style="padding:8px 14px;background:rgba(255,255,255,.8);border-bottom:1px solid var(--gb);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2)">
-        Proyección XY del Efector Final · Verde=inicio · Rojo=fin · Azul=posición actual
+
+      <!-- Barra de tabs + estadísticas (oculta hasta que se calcule la trayectoria) -->
+      <div id="traj_tab_bar" style="display:none;padding:0 10px;background:rgba(255,255,255,.92);border-bottom:1px solid var(--gb);align-items:center;gap:6px;flex-shrink:0;height:38px">
+        <div id="traj_tab_3d"  class="mtab active" onclick="setTrajTab('3d')"  style="font-size:10px;padding:4px 10px">Cartesiano 3D</div>
+        <div id="traj_tab_art" class="mtab"         onclick="setTrajTab('art')" style="font-size:10px;padding:4px 10px">Articular q(t)</div>
+        <div style="margin-left:auto;display:flex;gap:14px;align-items:center;font-size:10px;color:var(--muted2)">
+          <span>N=<strong id="traj_info_n" style="color:var(--text)">—</strong></span>
+          <span>T=<strong id="traj_info_t" style="color:var(--text)">—</strong>s</span>
+          <span id="traj_info_modo" style="font-size:9px;color:var(--muted);max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
+        </div>
+        <button class="btn btn-xs btn-secondary" style="margin-left:8px" onclick="resetTraj3DCam()">⟳</button>
       </div>
-      <div style="flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:14px">
-        <canvas id="canvas_traj2d" width="700" height="400"
-          style="border:1px solid var(--gb);border-radius:10px;background:#fff;max-width:100%;max-height:100%"></canvas>
-        <div id="traj_overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2" style="width:52px;height:52px;opacity:.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
-          <div style="font-size:13px;font-weight:700;color:#94a3b8">Sin trayectoria calculada</div>
-          <div style="font-size:11px;color:#94a3b8;text-align:center;max-width:260px;line-height:1.7">Ingrese posición inicial y final,<br>seleccione modo e interpolador<br>y presione <strong>Crear Trayectoria</strong></div>
+
+      <!-- Vista Espacio Cartesiano 3D -->
+      <div id="traj_3d_view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+        <div style="flex:1;position:relative;overflow:hidden">
+          <canvas id="canvas_traj3d" style="width:100%;height:100%;display:block;cursor:grab"></canvas>
+          <div id="traj_overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none;background:rgba(248,250,252,.9)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2" style="width:48px;height:48px;opacity:.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            <div style="font-size:13px;font-weight:700;color:#94a3b8">Sin trayectoria calculada</div>
+            <div style="font-size:11px;color:#94a3b8;text-align:center;max-width:260px;line-height:1.7">Configure Li, Lf, tipo e interpolador<br>y presione <strong>Crear Trayectoria</strong></div>
+          </div>
+        </div>
+        <div style="padding:4px 14px;background:rgba(255,255,255,.75);border-top:1px solid var(--gb);font-size:9px;color:var(--muted2);flex-shrink:0;display:flex;gap:16px;align-items:center">
+          <span><span style="color:#059669;font-weight:700">■</span> Li — inicio</span>
+          <span><span style="color:#dc2626;font-weight:700">■</span> Lf — final</span>
+          <span><span style="color:#f97316;font-weight:700">■</span> Simulación en curso</span>
         </div>
       </div>
-      <div id="traj_info_bar" style="padding:8px 14px;background:rgba(255,255,255,.8);border-top:1px solid var(--gb);display:none">
-        <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:11px;color:var(--muted2)">
-          <span>Puntos: <strong id="traj_info_n" style="color:var(--text)">—</strong></span>
-          <span>Tiempo total: <strong id="traj_info_t" style="color:var(--text)">—</strong> s</span>
-          <span>Modo: <strong id="traj_info_modo" style="color:var(--text)">—</strong></span>
+
+      <!-- Vista Espacio Articular q(t) — 2×2 grid para mayor legibilidad -->
+      <div id="traj_art_view" style="display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0">
+        <div id="traj_qspace" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+          <div style="flex:1;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);padding:10px;gap:10px;overflow:hidden">
+            <div style="display:flex;flex-direction:column;gap:4px;min-height:0">
+              <div style="font-size:9px;font-weight:700;color:#dc2626;text-align:center;letter-spacing:.6px;flex-shrink:0;text-transform:uppercase">Q₁ · X (mm)</div>
+              <canvas id="traj_q0_chart" style="flex:1;width:100%;min-height:0;border:1px solid var(--gb);border-radius:8px;background:#fff"></canvas>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;min-height:0">
+              <div style="font-size:9px;font-weight:700;color:#059669;text-align:center;letter-spacing:.6px;flex-shrink:0;text-transform:uppercase">Q₂ · Y (mm)</div>
+              <canvas id="traj_q1_chart" style="flex:1;width:100%;min-height:0;border:1px solid var(--gb);border-radius:8px;background:#fff"></canvas>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;min-height:0">
+              <div style="font-size:9px;font-weight:700;color:#2563eb;text-align:center;letter-spacing:.6px;flex-shrink:0;text-transform:uppercase">Q₃ · Z (mm)</div>
+              <canvas id="traj_q2_chart" style="flex:1;width:100%;min-height:0;border:1px solid var(--gb);border-radius:8px;background:#fff"></canvas>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;min-height:0">
+              <div style="font-size:9px;font-weight:700;color:#7c3aed;text-align:center;letter-spacing:.6px;flex-shrink:0;text-transform:uppercase">Q₄ · θ (°)</div>
+              <canvas id="traj_q3_chart" style="flex:1;width:100%;min-height:0;border:1px solid var(--gb);border-radius:8px;background:#fff"></canvas>
+            </div>
+          </div>
         </div>
       </div>
+
     </div><!-- /right -->
 
   </div>
@@ -1187,6 +1288,62 @@ input[type=range]:disabled{opacity:.3;cursor:not-allowed}
   </div>
 </div>
 
+<!-- ── PANEL: Visión ── -->
+<div id="panel-vision" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Visión por Computadora</div>
+      <div class="panel-sub">Cámara en tiempo real · Captura y lectura de escena</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:270px 1fr;flex:1;overflow:hidden">
+
+    <!-- ── LEFT: controles ── -->
+    <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--gb)">
+
+      <!-- Dispositivo -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--cyan)"></div>Dispositivo</div>
+        <select id="vision_device" onchange="visionChangeDevice()">
+          <option value="">Cámara 0</option>
+        </select>
+      </div>
+
+      <!-- Operaciones -->
+      <div class="card">
+        <div class="ct"><div class="ct-bar" style="background:var(--blue)"></div>Operaciones</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <button class="btn btn-green btn-full" id="btnVisionStart" onclick="initVision()">▶  Iniciar Visión</button>
+          <button class="btn btn-red btn-full" id="btnVisionStop" onclick="stopVision()" disabled>■  Detener Visión</button>
+          <button class="btn btn-primary btn-full" onclick="visionCapture()">📷  Ejecutar Lectura</button>
+        </div>
+      </div>
+
+      <!-- Lectura -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column">
+        <div class="ct"><div class="ct-bar" style="background:var(--orange)"></div>Lectura</div>
+        <div id="vision_lectura" style="flex:1;min-height:100px;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--muted2);background:rgba(0,0,0,.03);border:1px solid var(--gb);border-radius:8px;padding:10px;overflow-y:auto">
+          Sin captura
+        </div>
+      </div>
+
+    </div><!-- /left -->
+
+    <!-- ── RIGHT: video ── -->
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg0);position:relative;overflow:hidden;padding:20px">
+      <video id="vision_video" autoplay playsinline muted
+        style="max-width:100%;max-height:100%;border:1px solid var(--gb);border-radius:12px;background:#000;display:block"></video>
+      <canvas id="vision_canvas" style="display:none"></canvas>
+      <div id="vision_placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2" style="width:64px;height:64px;opacity:.3"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <div style="font-size:14px;font-weight:700;color:#94a3b8">Cámara no iniciada</div>
+        <div style="font-size:11px;color:#94a3b8">Presiona <strong>Iniciar Visión</strong></div>
+      </div>
+    </div><!-- /right -->
+
+  </div>
+</div>
+
 </div><!-- /content -->
 </div><!-- /app -->
 
@@ -1202,7 +1359,7 @@ let sseSource=null;
 let ikResult={x:0,y:0,z:0,servo:36,reachable:false};
 let fkResult={x:0,y:0,z:0,servo:36};
 let dkMethod='geom', ikMethod='geom';
-const LIM={x:265,y:190,z:120};
+const LIM={x:227,y:292,z:232};
 
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
@@ -1217,7 +1374,10 @@ function showPanel(id){
   if(id==='htm') updateHTM();
   if(id==='volume') setTimeout(initVolRenderer,50);
   if(id==='perfiles') setTimeout(initPerfilesPanel,80);
-  if(id==='traj') setTimeout(()=>{if(trajData)drawTraj2D();},50);
+  if(id==='traj') setTimeout(()=>{ initTraj3D(); if(trajData) drawTraj3D(); }, 60);
+  if(id==='direct') setTimeout(()=>initKinViz('fk'),60);
+  if(id==='inverse') setTimeout(()=>initKinViz('ik'),60);
+  if(id==='vision') setTimeout(enumCameras,100); else stopVision();
 }
 
 // Navigate programmatically (without relying on event.currentTarget)
@@ -1233,7 +1393,10 @@ function navToPanel(id){
   if(id==='htm') updateHTM();
   if(id==='volume') setTimeout(initVolRenderer,50);
   if(id==='perfiles') setTimeout(initPerfilesPanel,80);
-  if(id==='traj') setTimeout(()=>{if(trajData)drawTraj2D();},50);
+  if(id==='traj') setTimeout(()=>{ initTraj3D(); if(trajData) drawTraj3D(); }, 60);
+  if(id==='direct') setTimeout(()=>initKinViz('fk'),60);
+  if(id==='inverse') setTimeout(()=>initKinViz('ik'),60);
+  if(id==='vision') setTimeout(enumCameras,100); else stopVision();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1491,15 +1654,16 @@ function updateIKSendState(){
 // ══════════════════════════════════════════════════════════════
 // KINEMATICS
 // ══════════════════════════════════════════════════════════════
-const L1=50;          // mm — solo geometría/visualización de la escena
-const L2=56;          // mm — distancia del centro del servo a la punta del efector
-const Z_REF=295;      // mm — referencia fija del eje Z en la CD compensada
+const L1=55;          // mm — distancia eje Z al pivot servo (base 285 − L1 = Z_REF)
+const L2=40;          // mm — distancia del centro del servo a la punta del efector
+const Z_REF=230;      // mm — referencia fija del eje Z en la CD compensada (base 285 − L1 55)
+const BASE_H=Z_REF+L1; // 285 mm — altura total de la base (para visualización 3D)
 const SERVO_MIN=0;
 const SERVO_MAX=74;
 const SERVO_HOME=36;  // 36° = brazo horizontal
 const SERVO_REAL_SCALE=90/(74-36); // 38° mecánicos → 90° reales
-const D1_MAX=LIM.y;    // 190 mm — recorrido máximo motorY
-const D2_MAX=LIM.x;    // 265 mm — recorrido máximo motorX
+const D1_MAX=LIM.y;    // 292 mm — recorrido máximo motorY
+const D2_MAX=LIM.x;    // 227 mm — recorrido máximo motorX
 // CD v1.7:
 //   Px = d2
 //   Py = d1 + L2·cos(theta_real) - L2
@@ -1614,11 +1778,12 @@ function computeFK(){
   const pyBase=fk.pyBase, dPyArm=fk.dPyArm;
   const pzBase=fk.pzBase, dPzArm=fk.dPzArm;
   fkResult={x:q1,y:q2,z:q3,servo:q4};
+  updateKinViz3D('fk',q1,q2,q3,q4);
 
   const FK_UI_VER='v1.7';
   const fkBanner=`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;border-left:4px solid #22c55e;background:linear-gradient(90deg,rgba(34,197,94,.14),transparent);font-size:12px;line-height:1.65">
     <div style="font-weight:800;font-size:13px;margin-bottom:6px">Cinemática directa — <span style="color:#22c55e">panel FK_UI ${FK_UI_VER}</span></div>
-    <div><b>CD v1.7:</b> <b>Pₓ = d₂</b>. <b>Pᵧ = d₁ + 56·[cos(θ_real) − 1]</b>. <b>Pz = 295 − d₃ − 56·sin(θ_real)</b>. <b>θ_real = (θ₄ − 36)·2.368</b>.</div>
+    <div><b>CD v1.7:</b> <b>Pₓ = d₂</b>. <b>Pᵧ = d₁ + ${L2}·[cos(θ_real) − 1]</b>. <b>Pz = ${Z_REF} − d₃ − ${L2}·sin(θ_real)</b>. <b>θ_real = (θ₄ − 36)·2.368</b>.</div>
     <div style="margin-top:8px;padding:8px;border-radius:8px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.25)"><b>Z compensada:</b> <b>${pz.toFixed(1)} mm</b> con referencia fija de <b>${Z_REF} mm</b>.</div>
   </div>`;
 
@@ -1635,11 +1800,11 @@ function computeFK(){
           <div class="kin-formula">El recorrido del motor X es la coordenada Pₓ del efector. El brazo L2 <b>no</b> se proyecta sobre X.</div>
           <div class="kin-formula">Pₓ = d₂ = q₁ = ${q1.toFixed(2)} mm</div>
           <div class="kin-result">Pₓ = ${px.toFixed(4)} mm</div></div>
-        <div class="kin-step"><div class="kin-step-title">Pᵧ — d₁ + 56·[cos(θ_real) − 1]</div>
+        <div class="kin-step"><div class="kin-step-title">Pᵧ — d₁ + ${L2}·[cos(θ_real) − 1]</div>
           <div class="kin-formula">θ₄ = ${q4.toFixed(1)}° → θ_real = (${q4.toFixed(1)} − ${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)} = ${fk.thetaRealDeg.toFixed(3)}°</div>
-          <div class="kin-formula">Pᵧ = d₁ + 56·[cos(θ_real) − 1] = ${q2.toFixed(2)} + ${L2}·[cos(${fk.thetaRealDeg.toFixed(3)}°) − 1]</div>
+          <div class="kin-formula">Pᵧ = d₁ + ${L2}·[cos(θ_real) − 1] = ${q2.toFixed(2)} + ${L2}·[cos(${fk.thetaRealDeg.toFixed(3)}°) − 1]</div>
           <div class="kin-result">Pᵧ = ${py.toFixed(4)} mm</div></div>
-        <div class="kin-step"><div class="kin-step-title">Pz — 295 − d₃ − 56·sin(θ_real)</div>
+        <div class="kin-step"><div class="kin-step-title">Pz — ${Z_REF} − d₃ − ${L2}·sin(θ_real)</div>
           <div class="kin-formula">Pz = ${Z_REF} − q₃ − L₂·sin(θ_real)</div>
           <div class="kin-formula">Pz = ${Z_REF} − ${q3.toFixed(2)} − ${L2}·sin(${fk.thetaRealDeg.toFixed(3)}°)</div>
           <div class="kin-result">Pz = ${pz.toFixed(4)} mm</div></div>
@@ -1660,14 +1825,14 @@ Pz = ${pzBase.toFixed(2)} + (${dPzArm.toFixed(4)}) = <b>${pz.toFixed(4)}</b> mm
         <div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);font-size:12px;line-height:1.9">
           <div style="font-weight:800;margin-bottom:8px;color:var(--text)">Desglose (aquí se ve qué hace el servo)</div>
           <div><span style="color:#dc2626;font-weight:700">Pₓ</span> = <b>solo q₁ (motor X)</b> = <b>${px.toFixed(4)} mm</b> &nbsp;<span style="color:var(--muted2)">(L₂ no entra en X)</span></div>
-          <div><span style="color:#059669;font-weight:700">Pᵧ</span> = <b>q₂</b> ${pyBase.toFixed(2)} + <b>56·(cos θ_real − 1)</b> ${dPyArm.toFixed(4)} → <b>${py.toFixed(4)} mm</b></div>
-          <div><span style="color:#2563eb;font-weight:700">Pz</span> = <b>${Z_REF}−q₃</b> ${pzBase.toFixed(2)} <b>− 56·sin θ_real</b> (${dPzArm.toFixed(4)}) → <b>${pz.toFixed(4)} mm</b></div>
+          <div><span style="color:#059669;font-weight:700">Pᵧ</span> = <b>q₂</b> ${pyBase.toFixed(2)} + <b>${L2}·(cos θ_real − 1)</b> ${dPyArm.toFixed(4)} → <b>${py.toFixed(4)} mm</b></div>
+          <div><span style="color:#2563eb;font-weight:700">Pz</span> = <b>${Z_REF}−q₃</b> ${pzBase.toFixed(2)} <b>− ${L2}·sin θ_real</b> (${dPzArm.toFixed(4)}) → <b>${pz.toFixed(4)} mm</b></div>
         </div>
         <div style="font-family:var(--mono);font-size:12px;line-height:2;background:rgba(0,0,0,.04);padding:12px;border-radius:8px">
           <div style="font-weight:700;margin-bottom:6px;color:var(--muted2)">Fórmulas compactas</div>
           <span style="color:#dc2626">Pₓ = d₂ = q₁ = ${px.toFixed(4)} mm</span><br>
-          <span style="color:#059669">Pᵧ = d₁ + 56·[cos(θ_real) − 1] = ${py.toFixed(4)} mm</span><br>
-          <span style="color:#2563eb">Pz = ${Z_REF} − d₃ − 56·sin(θ_real) = ${pz.toFixed(4)} mm</span><br>
+          <span style="color:#059669">Pᵧ = d₁ + ${L2}·[cos(θ_real) − 1] = ${py.toFixed(4)} mm</span><br>
+          <span style="color:#2563eb">Pz = ${Z_REF} − d₃ − ${L2}·sin(θ_real) = ${pz.toFixed(4)} mm</span><br>
           <span style="color:var(--purple)">θ₄ = ${q4.toFixed(4)}° → θ_real = ${fk.thetaRealDeg.toFixed(4)}°</span>
         </div>
       </div>
@@ -1745,6 +1910,7 @@ function computeIK(){
     target:{px,py,pz,servo:th},
     achieved:{px:px_real,py:py_real,pz:pz_real}
   };
+  updateKinViz3D('ik',q1,q2,q3,q4);
   updateIKSendState();
   const targetMat=[[1,0,0,px],[0,Math.cos(_a),-Math.sin(_a),py],[0,Math.sin(_a),Math.cos(_a),pz],[0,0,0,1]];
   const thetaRealTxt=thetaRealDeg(th).toFixed(3);
@@ -1761,13 +1927,13 @@ function computeIK(){
           <div class="kin-formula">T₀₄ = [1 0 0 Pₓ; 0 cos(θ_r) -sin(θ_r) Pᵧ; 0 sin(θ_r) cos(θ_r) Pz; 0 0 0 1]</div>
           <div class="kin-formula" style="margin-top:8px">Con tu compensación:<br>
 Pₓ = d₂<br>
-Pᵧ = d₁ + 56·[cos(θ_real) − 1]<br>
-Pz = ${Z_REF} − d₃ − 56·sin(θ_real)<br>
+Pᵧ = d₁ + ${L2}·[cos(θ_real) − 1]<br>
+Pz = ${Z_REF} − d₃ − ${L2}·sin(θ_real)<br>
 θ_real = (θ₄ − ${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)}</div></div>
         <div class="kin-step"><div class="kin-step-title">Despeje de la IK</div>
           <div class="kin-formula">d₂ = Pₓ = ${px.toFixed(2)} mm</div>
-          <div class="kin-formula">d₁ = Pᵧ − 56·[cos(θ_real) − 1] = ${py.toFixed(2)} − ${L2}·[cos(${thetaRealTxt}°) − 1]</div>
-          <div class="kin-formula">d₃ = ${Z_REF} − Pz − 56·sin(θ_real) = ${Z_REF} − ${pz.toFixed(2)} − ${L2}·sin(${thetaRealTxt}°)</div>
+          <div class="kin-formula">d₁ = Pᵧ − ${L2}·[cos(θ_real) − 1] = ${py.toFixed(2)} − ${L2}·[cos(${thetaRealTxt}°) − 1]</div>
+          <div class="kin-formula">d₃ = ${Z_REF} − Pz − ${L2}·sin(θ_real) = ${Z_REF} − ${pz.toFixed(2)} − ${L2}·sin(${thetaRealTxt}°)</div>
           <div class="kin-formula">θ₄ = ${q4.toFixed(2)}° &nbsp;→&nbsp; θ_real = ${thetaRealTxt}°</div></div>
         <div class="kin-step"><div class="kin-step-title">Valores articulares obtenidos</div>
           <div class="kin-result">d₂ / eje X = ${q1.toFixed(4)} mm</div>
@@ -1797,11 +1963,11 @@ Pz = ${Z_REF} − d₃ − 56·sin(θ_real)<br>
       ${statusBanner}
       <div class="card"><div class="ct"><div class="ct-bar"></div>Método Analítico — Inversión de T₀₄</div>
         <div class="kin-step"><div class="kin-step-title">Inversión exacta de tu modelo cerrado</div>
-          <div class="kin-formula">T₀₄ = [1 0 0 d₂; 0 cos(θ_real) -sin(θ_real) d₁ + 56·(cos θ_real − 1); 0 sin(θ_real) cos(θ_real) ${Z_REF} − d₃ − 56·sin θ_real; 0 0 0 1]</div>
+          <div class="kin-formula">T₀₄ = [1 0 0 d₂; 0 cos(θ_real) -sin(θ_real) d₁ + ${L2}·(cos θ_real − 1); 0 sin(θ_real) cos(θ_real) ${Z_REF} − d₃ − ${L2}·sin θ_real; 0 0 0 1]</div>
           <div class="kin-formula" style="margin-top:8px">Entonces:<br>
 d₂ = Pₓ<br>
-d₁ = Pᵧ − 56·[cos(θ_real) − 1]<br>
-d₃ = ${Z_REF} − Pz − 56·sin(θ_real)<br>
+d₁ = Pᵧ − ${L2}·[cos(θ_real) − 1]<br>
+d₃ = ${Z_REF} − Pz − ${L2}·sin(θ_real)<br>
 θ_real = (θ₄−${SERVO_HOME})·${SERVO_REAL_SCALE.toFixed(3)}</div></div>
         <div class="kin-step"><div class="kin-step-title">Valores calculados (antes del clamp)</div>
           <div class="kin-formula">d₂ = <span style="color:var(--yellow)">${q1_raw.toFixed(4)}</span>
@@ -1809,9 +1975,9 @@ d₁ = <span style="color:var(--yellow)">${q2_raw.toFixed(4)}</span>
 d₃ = <span style="color:var(--yellow)">${q3_raw.toFixed(4)}</span>
 θ₄ = ${th.toFixed(4)}°</div></div>
         <div class="kin-step"><div class="kin-step-title">Aplicando límites físicos</div>
-          <div class="kin-formula">d₂ / X ∈ [0, 265] mm → <span style="color:var(--green)">${q1.toFixed(4)} mm</span>
-d₁ / Y ∈ [0, 190] mm → <span style="color:var(--green)">${q2.toFixed(4)} mm</span>
-d₃ / Z ∈ [0, 120] mm → <span style="color:var(--green)">${q3.toFixed(4)} mm</span>
+          <div class="kin-formula">d₂ / X ∈ [0, ${LIM.x}] mm → <span style="color:var(--green)">${q1.toFixed(4)} mm</span>
+d₁ / Y ∈ [0, ${LIM.y}] mm → <span style="color:var(--green)">${q2.toFixed(4)} mm</span>
+d₃ / Z ∈ [0, ${LIM.z}] mm → <span style="color:var(--green)">${q3.toFixed(4)} mm</span>
 θ₄ / servo ∈ [${SERVO_MIN}, ${SERVO_MAX}]° → <span style="color:var(--green)">${q4.toFixed(4)}°</span></div></div>
       </div>
       <div class="card"><div class="ct"><div class="ct-bar"></div>Verificación — T₀₄ objetivo vs T₀₄ alcanzado</div>
@@ -2067,6 +2233,9 @@ function animate(){
 window.addEventListener('DOMContentLoaded',async()=>{
   initThreeJS();
   window.addEventListener('resize',resizeRenderer);
+  // Inicializar previews de MTH en el panel de trayectoria
+  onLocArtChanged('li');
+  onLocArtChanged('lf');
   await refreshPorts();
   try{
     const r=await fetch('/api/manipulator/status');
@@ -2534,22 +2703,116 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════════════════════════
 // TRAYECTORIA — Planificación de movimientos
 // ══════════════════════════════════════════════════════════════
-let trajData = null;       // último resultado calculado
+let trajData = null;         // puntos para enviar al Arduino (N, máx 20)
+let trajDataRender = null;   // puntos densos para visualización (N*8, nunca al Arduino)
 let trajAnimRunning = false;
 let trajAnimIdx = 0;
 
-function trajLoadCurrent(){
-  document.getElementById('traj_qi1').value = pos.x.toFixed(2);
-  document.getElementById('traj_qi2').value = pos.y.toFixed(2);
-  document.getElementById('traj_qi3').value = pos.z.toFixed(2);
-  document.getElementById('traj_qi4').value = pos.servo.toFixed(2);
+// ── Parámetros internos de velocidad/aceleración (ocultos al usuario) ──
+const TRAJ_VMAX_P = 80;   // mm/s — prismático máx
+const TRAJ_VMAX_R = 20;   // °/s  — rotacional máx
+const TRAJ_A_P    = 150;  // mm/s² — aceleración prismática
+const TRAJ_A_R    = 30;   // °/s² — aceleración rotacional
+
+// ── Método de localización (articular / cartesiana) ──
+const _locMethod = {li:'art', lf:'art'};
+
+function setLocMethod(loc, method){
+  _locMethod[loc] = method;
+  document.getElementById(`${loc}-tab-art`).classList.toggle('active', method==='art');
+  document.getElementById(`${loc}-tab-cart`).classList.toggle('active', method==='cart');
+  document.getElementById(`${loc}-art-inputs`).style.display  = method==='art'  ? '' : 'none';
+  document.getElementById(`${loc}-cart-inputs`).style.display = method==='cart' ? '' : 'none';
+  if(method==='art')  onLocArtChanged(loc);
+  if(method==='cart') onLocCartChanged(loc);
 }
 
+// Articular → FK → muestra MTH completa (4×4) con todos los decimales
+function onLocArtChanged(loc){
+  const sfx = loc==='li' ? 'i' : 'f';
+  const q1 = parseFloat(document.getElementById(`traj_q${sfx}1`).value)||0;
+  const q2 = parseFloat(document.getElementById(`traj_q${sfx}2`).value)||0;
+  const q3 = parseFloat(document.getElementById(`traj_q${sfx}3`).value)||0;
+  const q4 = parseFloat(document.getElementById(`traj_q${sfx}4`).value)||36;
+  const fk = fkClosed(q1, q2, q3, q4);
+  const c = fk.c.toFixed(6), s = fk.s.toFixed(6);
+  const px = fk.px.toFixed(6), py = fk.py.toFixed(6), pz = fk.pz.toFixed(6);
+  const neg_s = (-fk.s).toFixed(6);
+  // Formato compacto de la MTH 4×4 con todos los decimales
+  const lines = [
+    `[ 1.000000   0.000000   0.000000  ${String(px).padStart(10)} ]`,
+    `[ 0.000000  ${String(c).padStart(10)}  ${String(neg_s).padStart(10)}  ${String(py).padStart(10)} ]`,
+    `[ 0.000000  ${String(s).padStart(10)}  ${String(c).padStart(10)}   ${String(pz).padStart(10)} ]`,
+    `[ 0.000000   0.000000   0.000000   1.000000 ]`
+  ];
+  document.getElementById(`${loc}-mth-preview`).innerHTML =
+    `<span style="color:var(--muted2);font-size:8px">MTH(${loc.toUpperCase()}) CD — q=(${q1},${q2},${q3},${q4})</span><br>` +
+    lines.join('<br>');
+}
+
+// Cartesiana → CI → muestra articulares
+function onLocCartChanged(loc){
+  const px = parseFloat(document.getElementById(`traj_${loc}_px`).value)||0;
+  const py = parseFloat(document.getElementById(`traj_${loc}_py`).value)||0;
+  const pz = parseFloat(document.getElementById(`traj_${loc}_pz`).value)||230;
+  const th = parseFloat(document.getElementById(`traj_${loc}_th`).value)||36;
+  const tr = thetaRealRad(th);
+  const c = Math.cos(tr), s = Math.sin(tr);
+  const q1 = Math.max(0, Math.min(LIM.x, px));
+  const q2 = Math.max(0, Math.min(LIM.y, py - L2*(c-1)));
+  const q3 = Math.max(0, Math.min(LIM.z, Z_REF - pz - L2*s));
+  const q4 = Math.max(0, Math.min(74, th));
+  const txt = `Q₁=${q1.toFixed(2)} mm · Q₂=${q2.toFixed(2)} mm · Q₃=${q3.toFixed(2)} mm · Q₄=${q4.toFixed(2)}°`;
+  document.getElementById(`${loc}-art-computed`).textContent = `q(${loc.toUpperCase()}) via CI: ${txt}`;
+  // Store computed articular values so computeTrajectory can use them
+  if(loc==='li'){
+    document.getElementById('traj_qi1').value = q1.toFixed(2);
+    document.getElementById('traj_qi2').value = q2.toFixed(2);
+    document.getElementById('traj_qi3').value = q3.toFixed(2);
+    document.getElementById('traj_qi4').value = q4.toFixed(2);
+  } else {
+    document.getElementById('traj_qf1').value = q1.toFixed(2);
+    document.getElementById('traj_qf2').value = q2.toFixed(2);
+    document.getElementById('traj_qf3').value = q3.toFixed(2);
+    document.getElementById('traj_qf4').value = q4.toFixed(2);
+  }
+}
+
+function trajLoadCurrent(loc){
+  const id = loc==='lf' ? 'f' : 'i';
+  document.getElementById(`traj_q${id}1`).value = pos.x.toFixed(2);
+  document.getElementById(`traj_q${id}2`).value = pos.y.toFixed(2);
+  document.getElementById(`traj_q${id}3`).value = pos.z.toFixed(2);
+  document.getElementById(`traj_q${id}4`).value = pos.servo.toFixed(2);
+  onLocArtChanged(loc||'li');
+}
+
+// Condiciona el interpolador según el tipo de trayectoria:
+// Trapezoidal NO está disponible para Analítica
+// Cúbico disponible para todos los tipos
 function trajOnTipoChange(){
-  const tipo = document.getElementById('traj_tipo').value;
-  const sel  = document.getElementById('traj_interp');
-  if(tipo === 'analitica'){ sel.value = 'cubico'; sel.disabled = true; }
-  else sel.disabled = false;
+  const tipo  = document.getElementById('traj_tipo').value;
+  const sel   = document.getElementById('traj_interp');
+  const note  = document.getElementById('traj_interp_note');
+  // Analítica solo con Cúbico
+  if(tipo === 'analitica'){
+    sel.value = 'cubico';
+    sel.disabled = true;
+    note.style.display = 'block';
+  } else {
+    sel.disabled = false;
+    note.style.display = 'none';
+  }
+}
+
+// Si el usuario elige Trapezoidal y tenía Analítica → switch a Eje a Eje
+function trajOnInterpChange(){
+  const interp = document.getElementById('traj_interp').value;
+  const tipo   = document.getElementById('traj_tipo').value;
+  if(interp === 'trap' && tipo === 'analitica'){
+    document.getElementById('traj_tipo').value = 'eje_eje';
+    document.getElementById('traj_interp_note').style.display = 'none';
+  }
 }
 
 // ── Tiempo mínimo trapezoidal para un eje ──
@@ -2619,9 +2882,18 @@ function cubicSplineN(q_w, t_w, N){
     return {t, q:t.map(()=>q_w[0]), qd:t.map(()=>0), qdd:t.map(()=>0)};
   }
   if(n === 2){
-    const v = (q_w[1]-q_w[0])/(t_w[1]-t_w[0]);
+    // Cúbico de Hermite con velocidades nulas en los extremos (q'(0)=q'(T)=0)
+    // q(s)  = qi + Δq·s²·(3−2s)          ← curva en S (smooth-step)
+    // q'(s) = Δq·6s(1−s)/T               ← velocidad en campana, cero en extremos
+    // q''(s)= Δq·6(1−2s)/T²              ← aceleración lineal, cambia signo en t=T/2
+    const TT = t_w[1] - t_w[0], dq = q_w[1] - q_w[0];
     const t = Array.from({length:N},(_,i)=>T0+i*(Tf-T0)/(N-1));
-    return {t, q:t.map(tt=>q_w[0]+v*(tt-T0)), qd:t.map(()=>v), qdd:t.map(()=>0)};
+    return {
+      t,
+      q:   t.map(tt=>{ const s=(tt-T0)/TT; return q_w[0]+dq*s*s*(3-2*s); }),
+      qd:  t.map(tt=>{ const s=(tt-T0)/TT; return dq*6*s*(1-s)/TT; }),
+      qdd: t.map(tt=>{ const s=(tt-T0)/TT; return dq*6*(1-2*s)/(TT*TT); })
+    };
   }
 
   const h = [], alpha = [];
@@ -2659,6 +2931,10 @@ function cubicSplineN(q_w, t_w, N){
 
 // ── Selección del algoritmo ──
 function computeTrajectory(){
+  // Si el método activo es cartesiano, asegurarse de que los articulares estén actualizados
+  if(_locMethod.li === 'cart') onLocCartChanged('li');
+  if(_locMethod.lf === 'cart') onLocCartChanged('lf');
+
   const qi = [
     parseFloat(document.getElementById('traj_qi1').value)||0,
     parseFloat(document.getElementById('traj_qi2').value)||0,
@@ -2671,16 +2947,13 @@ function computeTrajectory(){
     parseFloat(document.getElementById('traj_qf3').value)||0,
     parseFloat(document.getElementById('traj_qf4').value)||36
   ];
-  const N      = Math.max(2, parseInt(document.getElementById('traj_N').value)||10);
+  const N      = Math.max(2, Math.min(20, parseInt(document.getElementById('traj_N').value)||10));
   const tipo   = document.getElementById('traj_tipo').value;
   const interp = document.getElementById('traj_interp').value;
-  const vmaxP  = parseFloat(document.getElementById('traj_vmax_p').value)||80;
-  const vmaxR  = parseFloat(document.getElementById('traj_vmax_r').value)||20;
-  const aP     = parseFloat(document.getElementById('traj_a_p').value)||150;
-  const aR     = 30; // °/s²
 
-  const a    = [aP, aP, aP, aR];
-  const vmax = [vmaxP, vmaxP, vmaxP, vmaxR];
+  // Parámetros internos (no se exponen al usuario)
+  const a    = [TRAJ_A_P, TRAJ_A_P, TRAJ_A_P, TRAJ_A_R];
+  const vmax = [TRAJ_VMAX_P, TRAJ_VMAX_P, TRAJ_VMAX_P, TRAJ_VMAX_R];
 
   try {
     if(tipo === 'analitica'){
@@ -2694,25 +2967,53 @@ function computeTrajectory(){
     showTrajStatus('Error: '+e.message, 'red'); return;
   }
 
+  // Trayectoria densa para visualización (N_render = N×8 puntos, no va al Arduino)
+  // El profesor indica: "cada polinomio debe muestrearse internamente entre 5 y 10 veces"
+  const N_render = Math.max(80, N * 8);
+  try {
+    if(tipo === 'analitica'){
+      trajDataRender = buildTrajAnalitica(qi, qf, N_render, a, vmax);
+    } else if(interp === 'trap'){
+      trajDataRender = buildTrajTrapezoidal(qi, qf, a, vmax, N_render, tipo);
+    } else {
+      trajDataRender = buildTrajCubico(qi, qf, a, vmax, N_render, tipo);
+    }
+  } catch(e){ trajDataRender = trajData; }
+
   const np = trajData.t.length;
   document.getElementById('traj_overlay').style.display='none';
-  document.getElementById('traj_info_bar').style.display='block';
+  const modeLabels = {
+    eje_eje:    'Eje a Eje — movimiento secuencial articulación por articulación',
+    simultaneo: 'Ejes Simultáneos — T = max(T_min[j]), todos arrancan y terminan juntos',
+    aso:        'Isócrona — T coordinado, velocidad de cada eje escalada al recorrido',
+    analitica:  'Analítica — línea recta en espacio cartesiano vía CI'
+  };
   document.getElementById('traj_info_n').textContent = np;
   document.getElementById('traj_info_t').textContent = trajData.tTotal.toFixed(3);
-  document.getElementById('traj_info_modo').textContent = tipo + ' / ' + (tipo==='analitica'?'cúbico':interp);
-  showTrajStatus('✓ Trayectoria calculada — '+np+' puntos · T='+trajData.tTotal.toFixed(3)+'s', 'green');
-  drawTraj2D();
+  document.getElementById('traj_info_modo').textContent =
+    (tipo==='analitica' ? 'Analítica / Cúbico' : (tipo==='eje_eje'?'Eje a Eje':tipo==='simultaneo'?'Simultáneos':'Isócrona') + ' / ' + (interp==='trap'?'Trapezoidal':'Cúbico'));
+  showTrajStatus('✓ '+modeLabels[tipo]+' · '+np+' pts · T='+trajData.tTotal.toFixed(3)+'s', 'green');
+  // Mostrar barra de tabs y default a vista 3D
+  document.getElementById('traj_tab_bar').style.display = 'flex';
+  setTrajTab('3d');
+  drawTraj3D();
+  const mthI = T0E(qi[0], qi[1], qi[2], qi[3]);
+  const mthF = T0E(qf[0], qf[1], qf[2], qf[3]);
+  document.getElementById('traj_mth_i').innerHTML = renderMat(mthI);
+  document.getElementById('traj_mth_f').innerHTML = renderMat(mthF);
+  document.getElementById('traj_mth_section').style.display = 'block';
 }
 
 // ── Trapezoidal: eje_eje | simultaneo | aso ──
 function buildTrajTrapezoidal(qi, qf, a, vmax, N, tipo){
   if(tipo === 'eje_eje'){
     const allT=[], allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
+    const boundaries = []; // tiempos donde termina un eje y empieza el siguiente
     let t_off = 0;
     for(let j = 0; j < 4; j++){
       const T  = Math.max(trapMinTime(qi[j], qf[j], a[j], vmax[j]), 0.01);
       const pr = trapProfileN(qi[j], qf[j], a[j], T, N);
-      const s  = j===0 ? 0 : 1; // skip duplicate boundary point
+      const s  = j===0 ? 0 : 1;
       for(let i = s; i < pr.q.length; i++){
         allT.push(t_off + pr.t[i]);
         for(let jj = 0; jj < 4; jj++){
@@ -2725,15 +3026,32 @@ function buildTrajTrapezoidal(qi, qf, a, vmax, N, tipo){
         }
       }
       t_off += T;
+      if(j < 3) boundaries.push(t_off); // límite entre eje j y eje j+1
     }
-    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf};
+    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf, boundaries};
   } else {
-    // simultaneo y aso: misma duración T para todos los ejes
+    // Ejes Simultáneos: T = max(T_min), cada eje mantiene su vmax
+    if(tipo === 'simultaneo'){
+      const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
+      const T = Math.max(...tmins, 0.01);
+      const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
+      const joints = [];
+      for(let j = 0; j < 4; j++){
+        const pr = trapProfileN(qi[j], qf[j], a[j], T, N);
+        joints.push({q:pr.q, qd:pr.qd, qdd:pr.qdd});
+      }
+      return {joints, t:allT, tTotal:T, qi, qf};
+    }
+    // Isócrona (Coordinado): mismo T para todos, velocidad de crucero calculada
+    // por trapProfileN a partir de T → cada eje adapta su V para completar en T
+    // (diferencia con Simultáneos: la velocidad NO viene del vmax del usuario sino
+    //  que se resuelve de la ecuación trapezoidal V²-T·a·V+a·D=0)
     const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
     const T = Math.max(...tmins, 0.01);
     const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
     const joints = [];
     for(let j = 0; j < 4; j++){
+      // trapProfileN resuelve V = (T·a − sqrt(T²a²−4aD))/2 internamente
       const pr = trapProfileN(qi[j], qf[j], a[j], T, N);
       joints.push({q:pr.q, qd:pr.qd, qdd:pr.qdd});
     }
@@ -2745,6 +3063,7 @@ function buildTrajTrapezoidal(qi, qf, a, vmax, N, tipo){
 function buildTrajCubico(qi, qf, a, vmax, N, tipo){
   if(tipo === 'eje_eje'){
     const allT=[], allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
+    const boundaries = [];
     let t_off = 0;
     for(let j = 0; j < 4; j++){
       const T  = Math.max(trapMinTime(qi[j], qf[j], a[j], vmax[j]), 0.01);
@@ -2762,9 +3081,12 @@ function buildTrajCubico(qi, qf, a, vmax, N, tipo){
         }
       }
       t_off += T;
+      if(j < 3) boundaries.push(t_off);
     }
-    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf};
+    return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:t_off, qi, qf, boundaries};
   } else {
+    // simultaneo: T = max(tmin), cada eje usa su spline en ese T
+    // aso (Isócrona): misma lógica con spline cúbico — T común para todos
     const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
     const T = Math.max(...tmins, 0.01);
     const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
@@ -2777,174 +3099,137 @@ function buildTrajCubico(qi, qf, a, vmax, N, tipo){
   }
 }
 
-// ── Analítica: línea recta en espacio cartesiano vía CI ──
+// ── Analítica: línea recta en espacio cartesiano
+//   Principio del profesor: "las interpolaciones ocurren en el espacio articular"
+//   Flujo: N puntos cartesianos (línea recta) → CI a cada uno → spline cúbico en espacio articular
 function buildTrajAnalitica(qi, qf, N, a, vmax){
+  if(N < 2) N = 2;
   const fki = fkClosed(qi[0], qi[1], qi[2], qi[3]);
   const fkf = fkClosed(qf[0], qf[1], qf[2], qf[3]);
 
-  // Tiempo basado en el eje más lento
+  // Tiempo total basado en el eje articular más lento
   const tmins = qi.map((q,j) => trapMinTime(q, qf[j], a[j], vmax[j]));
   const T = Math.max(...tmins, 0.5);
+  const wp_t = Array.from({length:N}, (_, i) => i * T / (N-1));
 
-  const allQ=[[],[],[],[]], allQd=[[],[],[],[]], allQdd=[[],[],[],[]];
-  const allT = Array.from({length:N},(_,i)=>i*T/(N-1));
-
+  // Paso 1: N waypoints en línea recta en espacio cartesiano (interpolación LINEAL)
+  // Paso 2: CI a cada waypoint → N configuraciones articulares (waypoints en espacio articular)
+  const wp_q = [[], [], [], []];
   for(let i = 0; i < N; i++){
-    const s    = i / (N-1);
-    const blend = 3*s*s - 2*s*s*s; // smooth-step
-    // Interpolación lineal en espacio cartesiano
-    const px = fki.px + (fkf.px - fki.px)*blend;
-    const py = fki.py + (fkf.py - fki.py)*blend;
-    const pz = fki.pz + (fkf.pz - fki.pz)*blend;
-    const th = qi[3]  + (qf[3]  - qi[3]) *blend;
-    // CI para obtener coordenadas articulares
+    const s  = i / (N-1); // parámetro lineal 0→1
+    const px = fki.px + (fkf.px - fki.px) * s;
+    const py = fki.py + (fkf.py - fki.py) * s;
+    const pz = fki.pz + (fkf.pz - fki.pz) * s;
+    const th = qi[3]  + (qf[3]  - qi[3])  * s;
+    // CI analítica (misma que en computeIK)
     const tr = thetaRealRad(th);
     const c  = Math.cos(tr), sv = Math.sin(tr);
-    const d2 = px;
-    const d1 = py - L2*(c - 1);
-    const d3 = Z_REF - pz - L2*sv;
-    allQ[0].push(Math.max(0, Math.min(LIM.x, d2)));
-    allQ[1].push(Math.max(0, Math.min(LIM.y, d1)));
-    allQ[2].push(Math.max(0, Math.min(LIM.z, d3)));
-    allQ[3].push(Math.max(0, Math.min(74, th)));
+    wp_q[0].push(Math.max(0, Math.min(LIM.x, px)));
+    wp_q[1].push(Math.max(0, Math.min(LIM.y, py - L2*(c-1))));
+    wp_q[2].push(Math.max(0, Math.min(LIM.z, Z_REF - pz - L2*sv)));
+    wp_q[3].push(Math.max(0, Math.min(74,    th)));
   }
-  // Velocidad por diferencias finitas centrales
+
+  // Paso 3: Spline cúbico natural EN ESPACIO ARTICULAR a través de los N waypoints
+  // → así las interpolaciones ocurren en el espacio articular (principio del profesor)
+  const joints = [];
   for(let j = 0; j < 4; j++){
-    for(let i = 0; i < N; i++){
-      let v = 0;
-      if(i === 0)       v = N>1 ? (allQ[j][1]-allQ[j][0])/(allT[1]-allT[0]) : 0;
-      else if(i === N-1) v = (allQ[j][N-1]-allQ[j][N-2])/(allT[N-1]-allT[N-2]);
-      else              v = (allQ[j][i+1]-allQ[j][i-1])/(allT[i+1]-allT[i-1]);
-      allQd[j].push(v);
-    }
-    for(let i = 0; i < N; i++){
-      let acc = 0;
-      if(i > 0 && i < N-1){
-        const dt = allT[i+1]-allT[i-1];
-        acc = dt>0 ? (allQd[j][i+1]-allQd[j][i-1])/dt : 0;
-      }
-      allQdd[j].push(acc);
-    }
+    const spl = cubicSplineN(wp_q[j], wp_t, N);
+    joints.push({q: spl.q, qd: spl.qd, qdd: spl.qdd});
   }
-  return {joints:allQ.map((q,j)=>({q,qd:allQd[j],qdd:allQdd[j]})), t:allT, tTotal:T, qi, qf};
+  return {joints, t: wp_t, tTotal: T, qi, qf};
 }
 
-// ── Dibujar proyección XY ──
-function drawTraj2D(){
-  const canvas = document.getElementById('canvas_traj2d');
-  if(!canvas || !trajData) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0,0,W,H);
+// ── Dibujar trayectoria 3D ──
+function drawTraj3D(){
+  if(!trajData){ return; }
+  if(!traj3DEnv){ initTraj3D(); return; }
+  const scene = traj3DEnv.scene;
 
-  // Calcular puntos de efector final
-  const pts = trajData.joints[0].q.map((x,i)=>{
-    const fk = fkClosed(x, trajData.joints[1].q[i], trajData.joints[2].q[i], trajData.joints[3].q[i]);
-    return {x:fk.px, y:fk.py};
-  });
+  // Eliminar objetos anteriores de trayectoria
+  traj3DObjects.forEach(o => scene.remove(o));
+  traj3DObjects = [];
 
-  // Rango con margen
-  const margin = {t:30, r:20, b:30, l:50};
-  let xMin=Infinity,xMax=-Infinity,yMin=Infinity,yMax=-Infinity;
-  pts.forEach(p=>{ xMin=Math.min(xMin,p.x);xMax=Math.max(xMax,p.x);yMin=Math.min(yMin,p.y);yMax=Math.max(yMax,p.y); });
-  xMin=Math.min(xMin,0); xMax=Math.max(xMax,1); yMin=Math.min(yMin,0); yMax=Math.max(yMax,1);
-  const xSpan=xMax-xMin, ySpan=yMax-yMin;
-  const cW=W-margin.l-margin.r, cH=H-margin.t-margin.b;
-  const sc = Math.min(cW/xSpan, cH/ySpan) * 0.85;
-  const ox = margin.l + (cW - xSpan*sc)/2;
-  const oy = margin.t + cH - (cH - ySpan*sc)/2;
-  const toX = v => ox + (v - xMin)*sc;
-  const toY = v => oy - (v - yMin)*sc;
-
-  // Fondo
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-
-  // Cuadrícula
-  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=0.8;
-  const gStepX = xSpan > 100 ? 50 : xSpan > 20 ? 10 : 5;
-  const gStepY = ySpan > 100 ? 50 : ySpan > 20 ? 10 : 5;
-  const x0g = Math.ceil(xMin/gStepX)*gStepX;
-  const y0g = Math.ceil(yMin/gStepY)*gStepY;
-  ctx.beginPath();
-  for(let x=x0g;x<=xMax;x+=gStepX){ ctx.moveTo(toX(x),margin.t); ctx.lineTo(toX(x),margin.t+cH); }
-  for(let y=y0g;y<=yMax;y+=gStepY){ ctx.moveTo(margin.l,toY(y)); ctx.lineTo(margin.l+cW,toY(y)); }
-  ctx.stroke();
-
-  // Ejes
-  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(toX(xMin),toY(yMin)); ctx.lineTo(toX(xMax),toY(yMin));
-  ctx.moveTo(toX(xMin),toY(yMin)); ctx.lineTo(toX(xMin),toY(yMax));
-  ctx.stroke();
-
-  // Etiquetas de ejes
-  ctx.fillStyle='#94a3b8'; ctx.font='9px Inter,sans-serif';
-  for(let x=x0g;x<=xMax;x+=gStepX){ ctx.fillText(x, toX(x)-8, H-8); }
-  for(let y=y0g;y<=yMax;y+=gStepY){ ctx.fillText(y, 2, toY(y)+4); }
-  ctx.fillStyle='#475569'; ctx.font='bold 9px Inter,sans-serif';
-  ctx.fillText('Px (mm)', W/2-20, H-2);
-  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Py (mm)', 0, 0); ctx.restore();
-
-  // Trayectoria con gradiente verde→rojo
-  if(pts.length > 1){
-    for(let i=0;i<pts.length-1;i++){
-      const t_n = i/(pts.length-1);
-      const r = Math.round(220 * t_n);
-      const g = Math.round(150 * (1-t_n));
-      ctx.strokeStyle = `rgb(${r},${g},60)`;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(toX(pts[i].x), toY(pts[i].y));
-      ctx.lineTo(toX(pts[i+1].x), toY(pts[i+1].y));
-      ctx.stroke();
-    }
+  // Usar datos densos para visualización suave
+  const rd = trajDataRender || trajData;
+  const N = rd.t.length;
+  const pts3 = [];
+  for(let i=0;i<N;i++){
+    const fk = fkClosed(rd.joints[0].q[i], rd.joints[1].q[i],
+                        rd.joints[2].q[i], rd.joints[3].q[i]);
+    pts3.push(new THREE.Vector3(fk.px, fk.pz, fk.py));
   }
 
-  // Marcadores inicio y fin
-  const p0=pts[0], pN=pts[pts.length-1];
-  ctx.fillStyle='#059669'; ctx.beginPath(); ctx.arc(toX(p0.x),toY(p0.y),6,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(toX(pN.x),toY(pN.y),6,0,Math.PI*2); ctx.fill();
+  // Línea de trayectoria con gradiente verde→rojo (segmentos coloreados)
+  for(let i=0;i<N-1;i++){
+    const t_n = i/(N-1);
+    const r = Math.round(0xdc * t_n + 0x05 * (1-t_n));
+    const g = Math.round(0x26 * t_n + 0x96 * (1-t_n));
+    const b = Math.round(0x26 * t_n + 0x69 * (1-t_n));
+    const color = (r<<16)|(g<<8)|b;
+    const geo = new THREE.BufferGeometry().setFromPoints([pts3[i], pts3[i+1]]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color}));
+    scene.add(line); traj3DObjects.push(line);
+  }
+
+  function addSph(pos, color, r) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r,12,12),new THREE.MeshBasicMaterial({color}));
+    m.position.copy(pos); scene.add(m); traj3DObjects.push(m);
+  }
+  addSph(pts3[0], 0x059669, 8);       // inicio verde
+  addSph(pts3[N-1], 0xdc2626, 8);     // fin rojo
+
+  // Punto animado
+  traj3DDot = new THREE.Mesh(new THREE.SphereGeometry(10,12,12),new THREE.MeshBasicMaterial({color:0xf97316}));
+  traj3DDot.position.copy(pts3[0]);
+  traj3DDot.visible = false;
+  scene.add(traj3DDot); traj3DObjects.push(traj3DDot);
+
+  // Robot en posición inicial (Li)
+  const qi0 = trajData.qi;
+  traj3DUpdateRobot(qi0[0], qi0[1], qi0[2], qi0[3]);
+
+  // Ocultar overlay
+  const ov = document.getElementById('traj_overlay');
+  if(ov) ov.style.display='none';
 }
 
-// ── Simulación animada ──
+// ── Simulación animada 3D ──
 function simulateTraj(){
   if(!trajData){ showTrajStatus('Primero crea una trayectoria.','red'); return; }
-  if(trajAnimRunning){ trajAnimRunning=false; document.getElementById('btnSimTraj').textContent='⬤  Simular'; return; }
-  trajAnimRunning=true;
-  trajAnimIdx=0;
+  if(trajAnimRunning){
+    trajAnimRunning=false;
+    document.getElementById('btnSimTraj').textContent='⬤  Simular';
+    if(traj3DDot) traj3DDot.visible=false;
+    return;
+  }
+  if(!traj3DEnv){ initTraj3D(); setTimeout(simulateTraj,200); return; }
+  trajAnimRunning=true; trajAnimIdx=0;
   document.getElementById('btnSimTraj').textContent='■  Detener';
-  const totalPts = trajData.t.length;
-  const delay = Math.max(40, Math.round((trajData.tTotal*1000)/totalPts));
+  if(traj3DDot) traj3DDot.visible=true;
 
-  // Precalcular puntos EF
-  const efPts = trajData.joints[0].q.map((x,i)=>{
-    const fk=fkClosed(x, trajData.joints[1].q[i], trajData.joints[2].q[i], trajData.joints[3].q[i]);
-    return {x:fk.px, y:fk.py};
+  // Usar datos densos para simulación fluida
+  const rd = trajDataRender || trajData;
+  const totalPts = rd.t.length;
+  const delay = Math.max(20, Math.round((rd.tTotal*1000)/totalPts));
+
+  const efPts = Array.from({length:totalPts},(_,i)=>{
+    const fk=fkClosed(rd.joints[0].q[i],rd.joints[1].q[i],
+                      rd.joints[2].q[i],rd.joints[3].q[i]);
+    return new THREE.Vector3(fk.px, fk.pz, fk.py);
   });
-  // Calcular escala una sola vez
-  const margin={t:30,r:20,b:30,l:50};
-  let xMin=0,xMax=1,yMin=0,yMax=1;
-  efPts.forEach(p=>{ xMin=Math.min(xMin,p.x);xMax=Math.max(xMax,p.x);yMin=Math.min(yMin,p.y);yMax=Math.max(yMax,p.y); });
-  const canvas=document.getElementById('canvas_traj2d');
-  const W=canvas.width, H=canvas.height;
-  const cW=W-margin.l-margin.r, cH=H-margin.t-margin.b;
-  const sc=Math.min(cW/(xMax-xMin),cH/(yMax-yMin))*0.85;
-  const ox=margin.l+(cW-(xMax-xMin)*sc)/2;
-  const oy=margin.t+cH-(cH-(yMax-yMin)*sc)/2;
-  const toX=v=>ox+(v-xMin)*sc;
-  const toY=v=>oy-(v-yMin)*sc;
 
   function step(){
     if(!trajAnimRunning||trajAnimIdx>=totalPts){
       trajAnimRunning=false;
       document.getElementById('btnSimTraj').textContent='⬤  Simular';
+      if(traj3DDot) traj3DDot.visible=false;
       return;
     }
-    drawTraj2D();
-    const ctx=canvas.getContext('2d');
-    const p=efPts[trajAnimIdx];
-    ctx.fillStyle='#2563eb';
-    ctx.beginPath(); ctx.arc(toX(p.x),toY(p.y),5,0,Math.PI*2); ctx.fill();
+    const q = [rd.joints[0].q[trajAnimIdx], rd.joints[1].q[trajAnimIdx],
+               rd.joints[2].q[trajAnimIdx], rd.joints[3].q[trajAnimIdx]];
+    traj3DUpdateRobot(q[0],q[1],q[2],q[3]);
+    if(traj3DDot) traj3DDot.position.copy(efPts[trajAnimIdx]);
     trajAnimIdx++;
     setTimeout(step, delay);
   }
@@ -2968,14 +3253,187 @@ async function sendTrajToArduino(){
   showTrajStatus(`✓ Enviados ${N} puntos al Arduino.`, 'green');
 }
 
+// ── Gráficas espacio articular: q(t) por articulación ──
+// Eje a Eje: cada gráfica muestra el perfil LOCAL del eje (t=0 → T_j, q_i → q_f)
+//            y una etiqueta con el instante global en que arranca.
+// Otros modos: todas las articulaciones sobre el mismo eje de tiempo global.
+function drawQSpaceCharts(){
+  if(!trajData) return;
+  const rd = trajDataRender || trajData;
+  const colors  = ['#dc2626','#059669','#2563eb','#7c3aed'];
+  const isEjeEje = !!(rd.boundaries && rd.boundaries.length === 3);
+
+  for(let j = 0; j < 4; j++){
+    const cv = document.getElementById(`traj_q${j}_chart`);
+    if(!cv) continue;
+    const rect = cv.getBoundingClientRect();
+    const W = Math.round(rect.width)  || 320;
+    const H = Math.round(rect.height) || 180;
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+    // ── Selección del segmento a graficar ──
+    let tPlot, qPlot, tGlobalStart = 0;
+
+    if(isEjeEje){
+      // Eje a Eje: extraer la ventana de este eje en el array concatenado
+      const tGS = (j === 0) ? 0 : rd.boundaries[j-1];
+      const tGE = (j < rd.boundaries.length) ? rd.boundaries[j] : rd.tTotal;
+      tGlobalStart = tGS;
+      const idx = [];
+      for(let i = 0; i < rd.t.length; i++){
+        if(rd.t[i] >= tGS - 1e-6 && rd.t[i] <= tGE + 1e-6) idx.push(i);
+      }
+      if(idx.length < 2){
+        // Sin desplazamiento real (Δq ≈ 0)
+        ctx.fillStyle='#94a3b8'; ctx.textAlign='center';
+        ctx.font='bold 10px Inter,sans-serif';
+        ctx.fillText('Q'+(j+1)+': sin desplazamiento', W/2, H/2 - 8);
+        ctx.font='9px Inter,sans-serif';
+        ctx.fillText('Δq = 0  ·  arranca en t = '+tGS.toFixed(2)+'s', W/2, H/2 + 10);
+        continue;
+      }
+      // Tiempo LOCAL: 0 → T_j
+      tPlot = idx.map(i => rd.t[i] - tGS);
+      qPlot = idx.map(i => rd.joints[j].q[i]);
+    } else {
+      // Simultáneo / Isócrono / Analítico: eje de tiempo global
+      tPlot = rd.t;
+      qPlot = rd.joints[j].q;
+    }
+
+    const N = tPlot.length;
+    if(N < 2) continue;
+
+    // Márgenes: t=arriba, b=abajo, l=izquierda, r=derecha
+    // Para eje_eje reservamos más espacio arriba (info Δt/Δq) y abajo (instante global)
+    const mg = isEjeEje
+      ? {t:26, r:10, b:30, l:46}
+      : {t:20, r:10, b:22, l:44};
+    const cW = W - mg.l - mg.r;
+    const cH = H - mg.t - mg.b;
+
+    let dMin = qPlot[0], dMax = qPlot[0];
+    qPlot.forEach(v => { dMin=Math.min(dMin,v); dMax=Math.max(dMax,v); });
+    if(Math.abs(dMax - dMin) < 0.5){ dMin -= 0.5; dMax += 0.5; }
+    const tMin = tPlot[0], tMax = tPlot[N-1];
+    if(tMax - tMin < 1e-9) continue;
+
+    const toX = v => mg.l + (v - tMin) / (tMax - tMin) * cW;
+    const toY = v => mg.t + cH - (v - dMin) / (dMax - dMin) * cH;
+
+    // ── Grid de fondo ──
+    ctx.strokeStyle = '#f0f2f5'; ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    for(let k = 0; k <= 4; k++){
+      const y = mg.t + k * cH / 4;
+      ctx.moveTo(mg.l, y); ctx.lineTo(mg.l + cW, y);
+    }
+    for(let k = 0; k <= 4; k++){
+      const x = mg.l + k * cW / 4;
+      ctx.moveTo(x, mg.t); ctx.lineTo(x, mg.t + cH);
+    }
+    ctx.stroke();
+
+    // Relleno suave bajo la curva
+    const alpha = isEjeEje ? '22' : '14';
+    ctx.fillStyle = colors[j] + alpha;
+    ctx.beginPath();
+    ctx.moveTo(toX(tPlot[0]), mg.t + cH);
+    qPlot.forEach((v,i) => ctx.lineTo(toX(tPlot[i]), toY(v)));
+    ctx.lineTo(toX(tPlot[N-1]), mg.t + cH);
+    ctx.closePath(); ctx.fill();
+
+    // Línea en cero si la data lo cruza
+    if(dMin < 0 && dMax > 0){
+      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(mg.l, toY(0)); ctx.lineTo(mg.l+cW, toY(0)); ctx.stroke();
+    }
+
+    // ── Curva principal q(t) ──
+    ctx.strokeStyle = colors[j]; ctx.lineWidth = 2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    qPlot.forEach((v,i) => { i===0 ? ctx.moveTo(toX(tPlot[i]),toY(v)) : ctx.lineTo(toX(tPlot[i]),toY(v)); });
+    ctx.stroke();
+
+    // Puntos extremos con halo
+    [[tPlot[0],qPlot[0]],[tPlot[N-1],qPlot[N-1]]].forEach(([t,q])=>{
+      ctx.beginPath(); ctx.arc(toX(t), toY(q), 4, 0, Math.PI*2);
+      ctx.fillStyle = colors[j]; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+
+    // ── Ejes y etiquetas ──
+    ctx.fillStyle = '#6b7280'; ctx.font = '8px Inter,sans-serif';
+
+    // Eje Y: valores extremos
+    ctx.textAlign = 'right';
+    ctx.fillText(dMax.toFixed(1), mg.l - 3, mg.t + 6);
+    ctx.fillText(dMin.toFixed(1), mg.l - 3, mg.t + cH + 4);
+
+    if(isEjeEje){
+      // ── Eje X: "0s" a la izquierda, "T_j s" a la derecha ──
+      ctx.textAlign = 'left';  ctx.fillText('0s',                  mg.l,     H - mg.b + 13);
+      ctx.textAlign = 'right'; ctx.fillText(tMax.toFixed(2)+'s',   mg.l+cW,  H - mg.b + 13);
+
+      // ── Fila inferior: instante global de arranque ──
+      ctx.textAlign = 'center'; ctx.font = '8px Inter,sans-serif'; ctx.fillStyle = '#9ca3af';
+      const tag = (j === 0)
+        ? 'Primer eje — arranca en t = 0s'
+        : 'Arranca en t = ' + tGlobalStart.toFixed(3) + 's del recorrido';
+      ctx.fillText(tag, W/2, H - mg.b + 25);
+
+      // ── Fila superior: Δt y Δq del eje ──
+      const dq  = Math.abs(qPlot[N-1] - qPlot[0]);
+      const dt  = tMax - tMin;
+      ctx.font = 'bold 8px Inter,sans-serif'; ctx.fillStyle = colors[j];
+      ctx.textAlign = 'left';  ctx.fillText('Δq = '+dq.toFixed(2), mg.l + 2,   mg.t - 8);
+      ctx.textAlign = 'right'; ctx.fillText('T = '+dt.toFixed(3)+'s', mg.l+cW-2, mg.t - 8);
+
+    } else {
+      // Modo global: tiempo de inicio y fin
+      ctx.textAlign = 'left';  ctx.fillText(tMin.toFixed(2)+'s', mg.l,     H - 4);
+      ctx.textAlign = 'right'; ctx.fillText(tMax.toFixed(2)+'s', mg.l+cW,  H - 4);
+    }
+  }
+}
+
+function setTrajTab(tab){
+  const to3d = (tab === '3d');
+  document.getElementById('traj_3d_view').style.display  = to3d ? 'flex' : 'none';
+  document.getElementById('traj_art_view').style.display = to3d ? 'none' : 'flex';
+  document.getElementById('traj_tab_3d').classList.toggle('active',  to3d);
+  document.getElementById('traj_tab_art').classList.toggle('active', !to3d);
+  if(!to3d && trajData) setTimeout(drawQSpaceCharts, 40);
+}
+
 function clearTraj(){
-  trajData=null; trajAnimRunning=false;
+  trajData=null; trajDataRender=null; trajAnimRunning=false;
   document.getElementById('traj_status').style.display='none';
-  document.getElementById('traj_info_bar').style.display='none';
-  document.getElementById('traj_overlay').style.display='flex';
+  document.getElementById('traj_mth_section').style.display='none';
+  // Ocultar barra de tabs y resetear al estado inicial (vista 3D)
+  document.getElementById('traj_tab_bar').style.display='none';
+  document.getElementById('traj_3d_view').style.display='flex';
+  document.getElementById('traj_art_view').style.display='none';
+  document.getElementById('traj_tab_3d').classList.add('active');
+  document.getElementById('traj_tab_art').classList.remove('active');
+  const ov=document.getElementById('traj_overlay');
+  if(ov) ov.style.display='flex';
   document.getElementById('btnSimTraj').textContent='⬤  Simular';
-  const canvas=document.getElementById('canvas_traj2d');
-  if(canvas){ const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+  if(traj3DEnv){
+    traj3DObjects.forEach(o=>traj3DEnv.scene.remove(o));
+    traj3DObjects=[];
+    traj3DDot=null;
+    traj3DUpdateRobot(0,0,0,36);
+  }
+  // Limpiar charts
+  for(let j=0;j<4;j++){
+    const cv=document.getElementById(`traj_q${j}_chart`);
+    if(cv){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
+  }
   clearPerfiles();
 }
 
@@ -3101,6 +3559,186 @@ function markBreakpoints(ctx, t, data, toX, mg, cH, color){
   ctx.restore();
 }
 
+// ══════════════════════════════════════════════════════════════
+// 3D VISUALIZATION — Robot Skeleton + Trajectory + FK/IK viewers
+// ══════════════════════════════════════════════════════════════
+
+// ── Shared: build robot skeleton group ──
+// Three.js axes: x=robot X (horizontal), y=height (robot pz), z=robot Y (horizontal)
+function makeRobotGroup3D(q1,q2,q3,theta4){
+  const group = new THREE.Group();
+  const fk = fkClosed(q1,q2,q3,theta4);
+  const P = [
+    new THREE.Vector3(0,0,0),                         // P0 base foot
+    new THREE.Vector3(0,BASE_H,0),                    // P1 base top / Y-rail mount
+    new THREE.Vector3(0,BASE_H,q2),                   // P2 Y carriage
+    new THREE.Vector3(q1,BASE_H,q2),                  // P3 X carriage
+    new THREE.Vector3(q1,BASE_H-q3,q2),               // P4 Z carriage bottom
+    new THREE.Vector3(q1,Z_REF-q3,q2),                // P5 servo pivot
+    new THREE.Vector3(fk.px,fk.pz,fk.py),             // P6 end effector
+  ];
+  function lnk(a,b,col,r){
+    const dir=b.clone().sub(a), len=dir.length();
+    if(len<0.5) return;
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),new THREE.MeshBasicMaterial({color:col}));
+    m.position.copy(a.clone().add(b).multiplyScalar(0.5));
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    group.add(m);
+  }
+  function sph(p,col,r){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(r,10,10),new THREE.MeshBasicMaterial({color:col}));
+    m.position.copy(p); group.add(m);
+  }
+  // Rails de referencia (todo el recorrido)
+  lnk(P[1],new THREE.Vector3(0,BASE_H,LIM.y),0xdde3ed,3);
+  lnk(new THREE.Vector3(0,BASE_H,q2),new THREE.Vector3(LIM.x,BASE_H,q2),0xdde3ed,3);
+  // Eslabones cinemáticos
+  lnk(P[0],P[1],0x475569,7);    // columna base (gris)
+  lnk(P[1],P[2],0x059669,6);    // Y-motor (verde)
+  lnk(P[2],P[3],0xdc2626,6);    // X-motor (rojo)
+  lnk(P[3],P[4],0x2563eb,6);    // Z-motor (azul)
+  lnk(P[4],P[5],0x94a3b8,4);    // L1 arm
+  lnk(P[5],P[6],0x7c3aed,5);    // L2 servo arm (violeta)
+  // Articulaciones
+  sph(P[0],0x334155,9); sph(P[2],0x059669,7); sph(P[3],0xdc2626,7);
+  sph(P[4],0x94a3b8,6); sph(P[5],0x7c3aed,8); sph(P[6],0xf97316,10);
+  return {group, pts:P};
+}
+
+// ── Shared: create 3D scene environment ──
+function create3DEnv(canvasId){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return null;
+  const W=canvas.clientWidth||canvas.parentElement?.clientWidth||300;
+  const H=canvas.clientHeight||canvas.parentElement?.clientHeight||280;
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(0xf1f5f9);
+  const camera=new THREE.PerspectiveCamera(40,W/H,0.1,8000);
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setSize(W,H);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  scene.add(new THREE.AmbientLight(0xffffff,0.9));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6);
+  dl.position.set(300,500,200); scene.add(dl);
+  const grid=new THREE.GridHelper(800,16,0xc8d0dc,0xdde3ed);
+  grid.position.set(LIM.x/2,0,LIM.y/2); scene.add(grid);
+  const bGeo=new THREE.BoxGeometry(LIM.x,BASE_H,LIM.y);
+  const bMat=new THREE.MeshBasicMaterial({color:0x3b82f6,wireframe:true,opacity:0.1,transparent:true});
+  const bMesh=new THREE.Mesh(bGeo,bMat);
+  bMesh.position.set(LIM.x/2,BASE_H/2,LIM.y/2); scene.add(bMesh);
+  scene.add(new THREE.AxesHelper(60));
+  return {canvas,scene,camera,renderer};
+}
+
+// ── Shared: orbit camera setup ──
+function setupOrbitFor3D(canvas,state,target,onUpdate){
+  canvas.addEventListener('mousedown',e=>{state.isDrag=true;state.prev={x:e.clientX,y:e.clientY};});
+  canvas.addEventListener('mouseup',()=>state.isDrag=false);
+  canvas.addEventListener('mouseleave',()=>state.isDrag=false);
+  canvas.addEventListener('mousemove',e=>{
+    if(!state.isDrag)return;
+    state.theta+=(e.clientX-state.prev.x)*0.008;
+    state.phi=Math.max(0.1,Math.min(Math.PI-0.1,state.phi+(e.clientY-state.prev.y)*0.008));
+    state.prev={x:e.clientX,y:e.clientY};
+    onUpdate();
+  });
+  canvas.addEventListener('wheel',e=>{
+    state.radius=Math.max(100,Math.min(2000,state.radius+e.deltaY*0.5));
+    onUpdate();
+  },{passive:true});
+  let _t=[];
+  canvas.addEventListener('touchstart',e=>{_t=[...e.touches];state.isDrag=true;});
+  canvas.addEventListener('touchend',()=>{state.isDrag=false;_t=[];});
+  canvas.addEventListener('touchmove',e=>{
+    if(_t.length===1&&e.touches.length===1){
+      state.theta+=(e.touches[0].clientX-_t[0].clientX)*0.008;
+      state.phi=Math.max(0.1,Math.min(Math.PI-0.1,state.phi+(e.touches[0].clientY-_t[0].clientY)*0.008));
+      _t=[...e.touches]; onUpdate();
+    }
+  },{passive:true});
+}
+
+function applyOrbit3D(camera,state,target){
+  camera.position.set(
+    target.x+state.radius*Math.sin(state.phi)*Math.sin(state.theta),
+    target.y+state.radius*Math.cos(state.phi),
+    target.z+state.radius*Math.sin(state.phi)*Math.cos(state.theta)
+  );
+  camera.lookAt(target);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TRAJECTORY 3D VIEWER
+// ══════════════════════════════════════════════════════════════
+let traj3DEnv = null;
+let traj3DObjects = [];
+let traj3DDot = null;
+let traj3DRobotGroup = null;
+const traj3DCamState = {theta:0.6,phi:1.0,radius:700,isDrag:false,prev:{x:0,y:0}};
+const traj3DTarget = new THREE.Vector3(LIM.x/2,BASE_H/3,LIM.y/2);
+
+function initTraj3D(){
+  const canvas=document.getElementById('canvas_traj3d');
+  if(!canvas) return;
+  if(traj3DEnv && traj3DEnv.canvas===canvas) return; // ya inicializado
+  traj3DEnv=create3DEnv('canvas_traj3d');
+  if(!traj3DEnv) return;
+  applyOrbit3D(traj3DEnv.camera,traj3DCamState,traj3DTarget);
+  setupOrbitFor3D(canvas,traj3DCamState,traj3DTarget,()=>applyOrbit3D(traj3DEnv.camera,traj3DCamState,traj3DTarget));
+  traj3DUpdateRobot(0,0,0,36);
+  (function loop(){traj3DEnv._aId=requestAnimationFrame(loop);traj3DEnv.renderer.render(traj3DEnv.scene,traj3DEnv.camera);})();
+}
+
+function traj3DUpdateRobot(q1,q2,q3,theta4){
+  if(!traj3DEnv) return;
+  if(traj3DRobotGroup) traj3DEnv.scene.remove(traj3DRobotGroup);
+  const {group}=makeRobotGroup3D(q1,q2,q3,theta4);
+  traj3DRobotGroup=group;
+  traj3DEnv.scene.add(group);
+}
+
+function resetTraj3DCam(){
+  traj3DCamState.theta=0.6;traj3DCamState.phi=1.0;traj3DCamState.radius=700;
+  if(traj3DEnv) applyOrbit3D(traj3DEnv.camera,traj3DCamState,traj3DTarget);
+}
+
+// ══════════════════════════════════════════════════════════════
+// FK / IK 3D VIEWER
+// ══════════════════════════════════════════════════════════════
+const kinViz3D = {};
+const kinViz3DCam = {
+  fk:{theta:0.8,phi:1.0,radius:550,isDrag:false,prev:{x:0,y:0}},
+  ik:{theta:0.8,phi:1.0,radius:550,isDrag:false,prev:{x:0,y:0}}
+};
+const kinViz3DTarget = new THREE.Vector3(LIM.x/2,BASE_H/3,LIM.y/2);
+
+function initKinViz(id){
+  const canvasId=`canvas_${id}_viz`;
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  if(kinViz3D[id] && kinViz3D[id].canvas===canvas) return;
+  kinViz3D[id]=create3DEnv(canvasId);
+  if(!kinViz3D[id]) return;
+  const state=kinViz3DCam[id];
+  applyOrbit3D(kinViz3D[id].camera,state,kinViz3DTarget);
+  setupOrbitFor3D(canvas,state,kinViz3DTarget,()=>applyOrbit3D(kinViz3D[id].camera,state,kinViz3DTarget));
+  (function loop(){kinViz3D[id]._aId=requestAnimationFrame(loop);kinViz3D[id].renderer.render(kinViz3D[id].scene,kinViz3D[id].camera);})();
+  updateKinViz3D(id,0,0,0,36);
+}
+
+function updateKinViz3D(id,q1,q2,q3,theta4){
+  if(!kinViz3D[id]){ initKinViz(id); return; }
+  if(kinViz3D[id]._rg) kinViz3D[id].scene.remove(kinViz3D[id]._rg);
+  const {group}=makeRobotGroup3D(q1,q2,q3,theta4);
+  kinViz3D[id]._rg=group;
+  kinViz3D[id].scene.add(group);
+}
+
+function resetKinViz(id){
+  kinViz3DCam[id].theta=0.8;kinViz3DCam[id].phi=1.0;kinViz3DCam[id].radius=550;
+  if(kinViz3D[id]) applyOrbit3D(kinViz3D[id].camera,kinViz3DCam[id],kinViz3DTarget);
+}
+
 function clearPerfiles(){
   for(let j=0;j<4;j++){
     for(let r=0;r<3;r++){
@@ -3108,6 +3746,86 @@ function clearPerfiles(){
       if(cv){ const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); }
     }
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+// VISIÓN
+// ══════════════════════════════════════════════════════════════
+let visionStream = null;
+
+async function enumCameras(){
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    const sel = document.getElementById('vision_device');
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    if(cams.length === 0){ sel.innerHTML='<option value="">Sin cámara detectada</option>'; return; }
+    cams.forEach((c,i) => {
+      const opt = document.createElement('option');
+      opt.value = c.deviceId;
+      opt.textContent = c.label || `Cámara ${i}`;
+      if(c.deviceId === prev) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e){ console.warn('enumCameras', e.message); }
+}
+
+async function initVision(){
+  if(visionStream) stopVision();
+  const sel = document.getElementById('vision_device');
+  const deviceId = sel ? sel.value : '';
+  const constraints = { video: deviceId ? {deviceId:{exact:deviceId}} : true, audio: false };
+  try {
+    visionStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const vid = document.getElementById('vision_video');
+    vid.srcObject = visionStream;
+    document.getElementById('vision_placeholder').style.display = 'none';
+    document.getElementById('btnVisionStart').disabled = true;
+    document.getElementById('btnVisionStop').disabled = false;
+    await enumCameras();
+  } catch(e){
+    const lec = document.getElementById('vision_lectura');
+    if(lec) lec.textContent = 'Error al acceder a la cámara: ' + e.message;
+  }
+}
+
+function stopVision(){
+  if(!visionStream) return;
+  visionStream.getTracks().forEach(t => t.stop());
+  visionStream = null;
+  const vid = document.getElementById('vision_video');
+  if(vid) vid.srcObject = null;
+  const ph = document.getElementById('vision_placeholder');
+  if(ph) ph.style.display = '';
+  const btnStart = document.getElementById('btnVisionStart');
+  const btnStop  = document.getElementById('btnVisionStop');
+  if(btnStart) btnStart.disabled = false;
+  if(btnStop)  btnStop.disabled  = true;
+}
+
+function visionCapture(){
+  const vid = document.getElementById('vision_video');
+  const lec = document.getElementById('vision_lectura');
+  if(!visionStream || !vid || !vid.videoWidth){
+    if(lec) lec.textContent = 'Inicia la cámara primero.';
+    return;
+  }
+  const canvas = document.getElementById('vision_canvas');
+  canvas.width  = vid.videoWidth;
+  canvas.height = vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid, 0, 0);
+  const ts = new Date().toLocaleTimeString('es');
+  lec.innerHTML =
+    `<span style="color:var(--green);font-weight:700">[${ts}]</span> Captura realizada<br>`+
+    `Resolución: ${vid.videoWidth}&times;${vid.videoHeight} px<br>`+
+    `<img src="${canvas.toDataURL('image/jpeg',0.85)}"
+       style="margin-top:8px;max-width:100%;border-radius:6px;border:1px solid var(--gb)">`;
+}
+
+function visionChangeDevice(){
+  if(visionStream) initVision();
 }
 
 </script>

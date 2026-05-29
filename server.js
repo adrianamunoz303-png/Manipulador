@@ -9,7 +9,7 @@ const { URL } = require('url');
 const twilio = require('twilio');
 const manipulator = require('./manipulator-serial');
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 3001);
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'moule3d-change-this-secret';
 if (!process.env.SESSION_SECRET) {
@@ -5672,7 +5672,7 @@ function buildWhatsAppMessage(orders, level) {
       : `⏱ ${Math.floor(o.minutesLeft / 60)}h ${o.minutesLeft % 60}min`;
     return `• *${o.client}* — ${o.product}\n  ${timeText} (entrega: ${formatDueDate(o.dueAt)})`;
   });
-  return `${emoji} *Moule 3D — Alerta ${levelText}*\n\n${lines.join('\n\n')}\n\n_Panel: localhost:3000/panel_`;
+  return `${emoji} *Moule 3D — Alerta ${levelText}*\n\n${lines.join('\n\n')}\n\n_Panel: localhost:3001/panel_`;
 }
 
 async function sendWhatsAppAlert(orders, level) {

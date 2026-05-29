@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PORT="${PORT:-3000}"
+PORT="${PORT:-3001}"
 export PORT
 URL="http://127.0.0.1:${PORT}/manipulador"
 

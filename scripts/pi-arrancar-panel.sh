@@ -11,7 +11,7 @@
 #   PI_HOST      IP o hostname (default: 192.168.68.130)
 #   PI_USER      usuario SSH (default: moule3d)
 #   PI_WORKDIR   carpeta bajo $HOME en la Pi donde está server.js (default: moule3d)
-#   PORT         puerto HTTP (default: 3000)
+#   PORT         puerto HTTP (default: 3001)
 #   BACKGROUND=1 arranca en segundo plano en la Pi (logs en /tmp/moule3d.log)
 
 set -euo pipefail
@@ -19,7 +19,7 @@ set -euo pipefail
 PI_HOST="${PI_HOST:-192.168.68.130}"
 PI_USER="${PI_USER:-moule3d}"
 PI_WORKDIR="${PI_WORKDIR:-moule3d}"
-PORT="${PORT:-3000}"
+PORT="${PORT:-3001}"
 URL="http://${PI_HOST}:${PORT}/manipulador"
 
 echo "────────────────────────────────────────"
